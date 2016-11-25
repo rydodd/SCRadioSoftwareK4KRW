@@ -1,0 +1,7 @@
+SCRadioDisplay	KEYWORD1
+begin	KEYWORD2
+knobTurnListener	KEYWORD2
+buttonPressListener	KEYWORD2
+frequencyChangedListener	KEYWORD2
+displaySplash	KEYWORD2
+begin	KEYWORD2

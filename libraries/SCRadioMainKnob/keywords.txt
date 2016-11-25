@@ -1,0 +1,2 @@
+SCRadioKnob	KEYWORD1
+loop	KEYWORD2

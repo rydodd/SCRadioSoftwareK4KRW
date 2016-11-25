@@ -1,0 +1,6 @@
+SCRadioVFO	KEYWORD1
+knobTurnListener	KEYWORD2
+knobModeChangedListener	KEYWORD2
+keyLineChangedListener	KEYWORD2
+setInitialFrequency	KEYWORD2
+begin	KEYWORD2

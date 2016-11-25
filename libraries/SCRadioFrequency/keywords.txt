@@ -1,0 +1,13 @@
+SCRadioFrequency	KEYWORD1
+begin	KEYWORD2
+addHertz	KEYWORD2
+addKiloHertz	KEYWORD2
+addMegaHertz	KEYWORD2
+compare	KEYWORD2
+equals	KEYWORD2
+replaceValue	KEYWORD2
+asInt32	KEYWORD2
+megaHertz	KEYWORD2
+kiloHertz	KEYWORD2
+hertz	KEYWORD2
+

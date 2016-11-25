@@ -1,0 +1,6 @@
+SCRadioEventCommons	KEYWORD1
+begin	KEYWORD2
+setEventRelatedText	KEYWORD2
+getEventRelatedText	KEYWORD2
+setEventRelatedFrequency	KEYWORD2
+getEventRelatedFrequency	KEYWORD2
