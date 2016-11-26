@@ -55,15 +55,15 @@ void SCRadioDisplay::backlightStatusChangedListener(int eventCode, int whichMenu
 
 void SCRadioDisplay::displaySplash()
 {
+	clearDisplayLine(LCDDisplayLine::FIRST_LINE);
+	clearDisplayLine(LCDDisplayLine::SECOND_LINE);
 	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
 	lcd.print(_splashLine1);
 	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
 	lcd.print(_splashLine2);
 	delay(_splashDelay);
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
-	lcd.print(BLANK_LCD_LINE);
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
-	lcd.print(BLANK_LCD_LINE);
+	clearDisplayLine(LCDDisplayLine::FIRST_LINE);
+	clearDisplayLine(LCDDisplayLine::SECOND_LINE);
 }
 
 void SCRadioDisplay::errorOccurredListener(int eventCode, int errorCode)
@@ -181,8 +181,7 @@ void SCRadioDisplay::displayMenuItemValue(int8_t whichMenuItem)
 	char textToDisplay[TEXT_FOR_DISPLAY_MAX_LENGTH + 1];
 	ISCRadioReadOnlyMenuItem * menuItem = _eventData.getReadOnlyMenuItem(whichMenuItem);
 	menuItem->getMenuItemDisplayValueCopy(textToDisplay);
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
-	lcd.print(BLANK_LCD_LINE);
+	clearDisplayLine(LCDDisplayLine::SECOND_LINE);
 	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
 	lcd.print(textToDisplay);
 }
@@ -209,12 +208,10 @@ void SCRadioDisplay::displayFrequency()
 	SCRadioFrequency *currentFrequency = _eventData.getEventRelatedFrequency(EventFrequencyField::OPERATING_FREQUENCY);
 
 	sprintf(frequencyToDisplay,
-//	"  %d.%03d.%03d %c%c%c ",
 	"%d.%03d.%03d MHz %c%c",
 	currentFrequency->megaHertz(),
 	currentFrequency->kiloHertz(),
 	currentFrequency->hertz(), 
-//	zeroBeatModeIndicator,
 	ritIndicator,
 	offsetDirectionIndicator);
 

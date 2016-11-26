@@ -96,7 +96,7 @@ public:
 	void changeSelectedMenuItem(int turnDirection);
 
 	/**
-	 * menuItemKnobTurnListener
+	 * menuItemKnobTurnedListener
 	 * 
 	 * @detail
 	 *   Listens for menu item knob turn events
@@ -104,10 +104,10 @@ public:
 	 * @param[in] eventCode Identifies what type of event message
 	 * @param[in] turnDirection Identifies direction of knob turn
 	 */
-	void menuItemKnobTurnListener(int eventCode, int turnDirection);
+	void menuItemKnobTurnedListener(int eventCode, int turnDirection);
 	
 	/**
-	* menuKnobTurnListener
+	* menuKnobTurnedListener
 	*
 	* @detail
 	*   Listens for menu knob turn events
@@ -115,7 +115,7 @@ public:
 	* @param[in] eventCode Identifies what type of event message
 	* @param[in] turnDirection Identifies direction of knob turn
 	*/
-	void menuKnobTurnListener(int eventCode, int turnDirection);
+	void menuKnobTurnedListener(int eventCode, int turnDirection);
     
 	private:
 };

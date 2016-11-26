@@ -93,8 +93,8 @@ void vfoKeyLineChangedListener(int eventCode, int keyStatus);
 void displayMainKnobModeChangedListener(int eventCode, int newMode);
 void displayMenuItemSelectedListener(int eventCode, int menuItemNumber);
 void displayMenuItemValueChangedListener(int eventCode, int whichMenuItem);
-void menuKnobTurnListener(int eventCode, int turnDirection);
-void menuItemKnobTurnListener(int eventCode, int turnDirection);
+void menuKnobTurnedListener(int eventCode, int turnDirection);
+void menuItemKnobTurnedListener(int eventCode, int turnDirection);
 void vfoRitStatusChangedListener(int eventCode, int whichMenuItem);
 void displayBacklightStatusChangedListener(int eventCode, int whichMenuItem);
 void vfoRxOffsetDirectionChangedListener(int eventCode, int whichMenuItem);
@@ -233,8 +233,8 @@ void setup()
 	eventManager.addListener(static_cast<int>(EventType::FREQUENCY_CHANGED), &eepromFrequencyChangedListener);
 	eventManager.addListener(static_cast<int>(EventType::KEY_LINE_CHANGED), &vfoKeyLineChangedListener);
 	eventManager.addListener(static_cast<int>(EventType::MAIN_KNOB_MODE_CHANGED), &displayMainKnobModeChangedListener);
-	eventManager.addListener(static_cast<int>(EventType::MENU_KNOB_TURNED), &menuKnobTurnListener);
-	eventManager.addListener(static_cast<int>(EventType::MENU_ITEM_KNOB_TURNED), &menuItemKnobTurnListener);
+	eventManager.addListener(static_cast<int>(EventType::MENU_KNOB_TURNED), &menuKnobTurnedListener);
+	eventManager.addListener(static_cast<int>(EventType::MENU_ITEM_KNOB_TURNED), &menuItemKnobTurnedListener);
 	eventManager.addListener(static_cast<int>(EventType::MENU_ITEM_SELECTED), &displayMenuItemSelectedListener);
 	eventManager.addListener(static_cast<int>(EventType::RIT_STATUS_CHANGED), &vfoRitStatusChangedListener);
 	eventManager.addListener(static_cast<int>(EventType::MENU_ITEM_VALUE_CHANGED), &displayMenuItemValueChangedListener);
@@ -372,12 +372,12 @@ void setupRxOffsetDirectionMenuItem()
 //
 void vfoKnobTurnedListener(int eventCode, int turnDirection)
 {
-	vfo.vfoKnobTurnListener(eventCode, turnDirection);
+	vfo.vfoKnobTurnedListener(eventCode, turnDirection);
 }
 
 void ritKnobTurnedListener(int eventCode, int turnDirection)
 {
-	vfo.ritKnobTurnListener(eventCode, turnDirection);
+	vfo.ritKnobTurnedListener(eventCode, turnDirection);
 }
 
 void displayFrequencyChangedListener(int eventCode, int eventLongIndex)
@@ -415,14 +415,14 @@ void displayMenuItemValueChangedListener(int eventCode, int whichMenuItem)
 	lcdDisplay.menuItemValueChangedListener(eventCode, whichMenuItem);
 }
 
-void menuKnobTurnListener(int eventCode, int turnDirection)
+void menuKnobTurnedListener(int eventCode, int turnDirection)
 {
-	menu.menuKnobTurnListener(eventCode, turnDirection);
+	menu.menuKnobTurnedListener(eventCode, turnDirection);
 }
 
-void menuItemKnobTurnListener(int eventCode, int turnDirection)
+void menuItemKnobTurnedListener(int eventCode, int turnDirection)
 {
-	menu.menuItemKnobTurnListener(eventCode, turnDirection);
+	menu.menuItemKnobTurnedListener(eventCode, turnDirection);
 }
 
 void vfoRitStatusChangedListener(int eventCode, int whichMenuItem)

@@ -157,16 +157,6 @@ private:
 	RxTxStatus _rxTXStatus;
 
 	/**
-	 * Used when calculating new frequencies
-	 */
-	SCRadioFrequency _lastTXFrequency;
-
-	/**
-	 * used when calculating new frequencies
-	 */
-	SCRadioFrequency _newTXFrequency;
-
-	/**
 	 * indicates whether offset is positive or negative
 	 */
 	RxOffsetDirection _rxOffsetDirection;
@@ -239,7 +229,7 @@ public:
 	* @param[in] eventCode Identifies which event type
 	* @param[in] turnDirection Indicates which direction the knob turned
 	*/	
-	void ritKnobTurnListener(int eventCode, int turnDirection);
+	void ritKnobTurnedListener(int eventCode, int turnDirection);
 
 	/**
 	* ritStatusChangedListener
@@ -282,7 +272,7 @@ public:
 	* @param[in] eventCode Identifies which event type
 	* @param[in] turnDirection indicates which direction it turned
 	*/
-	void vfoKnobTurnListener(int eventCode, int turnDirection);
+	void vfoKnobTurnedListener(int eventCode, int turnDirection);
 
 private:
    	
@@ -304,7 +294,8 @@ private:
 	 * calculateRXFrequency
 	 * 
 	 * @detail
-	 *   Calculates a new receive frequency
+	 *   Calculates a new receive frequency taking into account RxOffset 
+	 *   value and direction and also RIT status and setting
 	 */
 	void calculateRXFrequency();
 
@@ -335,28 +326,66 @@ private:
 	void changeRITOffset(int8_t turnDirection);
 	
 	/**
-	 * checkFrequencyBounds
+	 * changeRITStatus
+	 * 
+	 * @detail
+	 *   Changes RIT between enabled and disabled status
+	 *   
+	 * @param[in] whichMenuItem Number of menu item that directed the change
+	 */
+	void changeRITStatus(int8_t whichMenuItem);
+
+	/**
+	 * changeRxOffsetDirection
+	 * 
+	 * @detail
+	 *   Changes the RxOffset to the opposite side of the receive frequency
+	 *   
+	 * @param[in] whichMenuItem Number of menu item that directed the change
+	 */
+	void changeRxOffsetDirection(int8_t whichMenuItem);
+
+	/**
+	 * checkBoundsAndCorrectIfNeeded
 	 * 
 	 * @detail
 	 *   Checks a new frequency against the band boundaries and corrects if if necessary
+	 *   
+	 * @param[in-out] newTXFrequency new TX frequency to check and adjust if needed
 	 */
-	void checkFrequencyBounds();
+	void checkBoundsAndCorrectIfNeeded(SCRadioFrequency &newTXFrequency);
    	
 	/**
-	 * checkRITBoundaries
+	 * checkRITBoundariesAndCorrectIfNeeded
 	 * 
 	 * @detail
 	 *   Checks provided rit offset against the maximum RIT offset and returns the value (corrected if necessary)
+	 *   
+	 * @param[in] newRitOffsetHz 
+	 * 
+	 * @returns new RIT value corrected if necessary
 	 */
-	int16_t checkRITBoundaries(int16_t newRitOffsetHz);
- //  	
-	///**
-	// * sendFrequencyToDDS
-	// * 
-	// * @detail
-	// *   Sends 
-	// */
-	//void sendFrequencyToDDS();
+	int16_t checkRITBoundariesAndCorrectIfNeeded(int16_t newRitOffsetHz);
+
+	/**
+	 * initializeKeyOutPin
+	 * 
+	 * @detail
+	 *   Sets up the output pin that keys the 49er to transmit
+	 */
+	void initializeKeyOutPin();
+
+	/**
+	 * switchTXRXFrequencyAndStatus
+	 * 
+	 * @detail
+	 *   Does either:
+	 *   Send the TX frequency to the DDS and key the transmitter
+	 *   Unkey the transmitter and send the RX frequency to the DDS
+	 *   
+	 * @param[in] keyStatus status of the key 
+	 */
+	void sendToDDSTxRxFrequencyAndChangeTxRxStatus(int16_t keyStatus);
 };
 
 #endif

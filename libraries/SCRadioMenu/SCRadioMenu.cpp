@@ -64,13 +64,13 @@ void SCRadioMenu::changeSelectedMenuItem(int turnDirection)
 	_selectedMenuItem = newMenuItemNumber;
 }
 
-void SCRadioMenu::menuKnobTurnListener(int eventCode, int turnDirection)
+void SCRadioMenu::menuKnobTurnedListener(int eventCode, int turnDirection)
 {
 	changeSelectedMenuItem(turnDirection);
 	_eventManager.queueEvent(static_cast<int>(EventType::MENU_ITEM_SELECTED), _selectedMenuItem);
 }
 
-void SCRadioMenu::menuItemKnobTurnListener(int eventCode, int turnDirection)
+void SCRadioMenu::menuItemKnobTurnedListener(int eventCode, int turnDirection)
 {
 	// Serial.println("Menu item knob turn listener");
 	KnobTurnDirection knobTurnDirection = (KnobTurnDirection)turnDirection;

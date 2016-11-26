@@ -53,8 +53,7 @@ SCRadioVFO::SCRadioVFO(EventManager &eventManager,
     					_mediumTuningIncrement(mediumTuningIncrement),
     					_fastTuningIncrement(fastTuningIncrement),
     					_mediumTuningThresholdms(mediumTuningThresholdms),
-    					_fastTuningThresholdms(fastTuningThresholdms),
-    					_lastTXFrequency(lowerFrequencyLimit) 
+    					_fastTuningThresholdms(fastTuningThresholdms)
 {
 	// Don't bother putting any logic here.  Arduino constructors are not.  This section will never run.
 	// Put your logic in 'begin() instead and call it after instantiating your object.
@@ -62,97 +61,65 @@ SCRadioVFO::SCRadioVFO(EventManager &eventManager,
 
 // public methods
 
+// this initializes the instance to be ready to use.
+// logic would normally be in a constructor.
 void SCRadioVFO::begin()
 {
-	pinMode(_keyOutPin, OUTPUT);
-	digitalWrite(_keyOutPin, LOW);
+	initializeKeyOutPin();
+
+	// set some class status variables
 	_ritStatus = RitStatus::DISABLED;
 	_rxTXStatus = RxTxStatus::RX;
 	_currentTuningIncrement = _slowTuningIncrement;
 	_currentTXFrequency = _initialFrequency;
+	_ritUpperLimitHz = _ritMaxOffsetHz;
+	_ritLowerLimitHz = _ritMaxOffsetHz * -1;
+
+	// initialize data in the eventData object which holds values needed by all 
+	// event handling logic.  Since we can't pass an object with the event message
+	// the _eventData class holds the data we would normally pass with the event message
 	_eventData.setEventRelatedLong(0, EventLongField::RIT_OFFSET);
 	_eventData.setEventRelatedBool(false, EventBoolField::RIT_IS_ENABLED);
 	_eventData.setEventRelatedBool(false, EventBoolField::RX_OFFSET_IS_POSITIVE);
+
 	calculateRXFrequency();
-	_ritUpperLimitHz = _ritMaxOffsetHz;
-	_ritLowerLimitHz = _ritMaxOffsetHz * -1;
 }
 
 void SCRadioVFO::keyLineChangedListener(int eventCode, int keyStatus)
 {
-	switch ((KeyStatus)keyStatus)
-	{
-	case KeyStatus::PRESSED:
-		_rxTXStatus = RxTxStatus::TX;
-		_dds.sendFrequencyToDDS(_currentTXFrequency.asInt32());
-		digitalWrite(_keyOutPin, HIGH);
-		break;
-	default:
-		digitalWrite(_keyOutPin, LOW);
-		_rxTXStatus = RxTxStatus::RX;
-		_dds.sendFrequencyToDDS(_currentRXFrequency.asInt32());
-	}
+	// respond to CW key press
+	sendToDDSTxRxFrequencyAndChangeTxRxStatus(keyStatus);
 }
 
-void SCRadioVFO::ritKnobTurnListener(int eventCode, int turnDirection)
+void SCRadioVFO::ritKnobTurnedListener(int eventCode, int turnDirection)
 {
-	if (_rxTXStatus == RxTxStatus::TX) 
-	{
-		return;
-	}
-
-	// calculateTuningIncrement();
-
 	changeRITOffset(turnDirection);
 }
 
 void SCRadioVFO::ritStatusChangedListener(int eventCode, int whichMenuItem)
 {
-	ISCRadioReadOnlyMenuItem* menuItem = _eventData.getReadOnlyMenuItem(whichMenuItem);
-
-	long menuItemValue = menuItem->getMenuItemValue();
-
-	_ritStatus = (RitStatus)menuItemValue;
-
-	_eventData.setEventRelatedBool((_ritStatus == RitStatus::ENABLED), EventBoolField::RIT_IS_ENABLED);
-
-	calculateRXFrequency();
-
-	_dds.sendFrequencyToDDS(_currentRXFrequency.asInt32());
+	changeRITStatus(whichMenuItem);
 }
 
 void SCRadioVFO::rxOffsetDirectionChangedListener(int eventCode, int whichMenuItem)
 {
-	ISCRadioReadOnlyMenuItem* menuItem = _eventData.getReadOnlyMenuItem(whichMenuItem);
-	long menuItemValue = menuItem->getMenuItemValue();
-
-	RxOffsetDirection rxOffsetDirection = (RxOffsetDirection)menuItemValue;
-
-	if (((RxOffsetDirection::BELOW == rxOffsetDirection)
-		&& (_rxOffset > 0))
-			|| ((RxOffsetDirection::ABOVE == rxOffsetDirection)
-				&& (_rxOffset < 0)))
-	{
-		_rxOffset *= -1;
-	}
-
-	_eventData.setEventRelatedBool((_rxOffset > 0), EventBoolField::RX_OFFSET_IS_POSITIVE);
-
-	calculateRXFrequency();
-
-	_dds.sendFrequencyToDDS(_currentRXFrequency.asInt32());
+	changeRxOffsetDirection(whichMenuItem);
 }
 
 void SCRadioVFO::setInitialFrequency(int32_t initialFrequency)
 {
+	// I set the initial frequency 10 Hz low here because my first action to kick things off
+	// in the main app is to send a message that the knob turned CW.
+	// That action will add the 10 Hz back
+	// And everything (DDS, eventData, display) will have the correct frequency information
 	_initialFrequency.replaceValue((int32_t)(initialFrequency - 10));
 	_currentTXFrequency.replaceValue((int32_t)(initialFrequency - 10));
 	_eventData.setEventRelatedFrequency(&_currentTXFrequency, EventFrequencyField::OPERATING_FREQUENCY);
-	_eventManager.queueEvent(static_cast<int>(EventType::FREQUENCY_CHANGED), static_cast<int>(EventFrequencyField::OPERATING_FREQUENCY));
 }
 
-void SCRadioVFO::vfoKnobTurnListener(int eventCode, int turnDirection)
+void SCRadioVFO::vfoKnobTurnedListener(int eventCode, int turnDirection)
 {
+	// I don't want to change the frequency while transmitting.  So, I just bail
 	if (_rxTXStatus == RxTxStatus::TX)
 	{
 		return;
@@ -165,6 +132,8 @@ void SCRadioVFO::vfoKnobTurnListener(int eventCode, int turnDirection)
 
 // private methods
 
+// calculate RX frequency happens every time the tx frequency, rit or rx offset direction change.
+// we use the calculated value every time we switch to rx status.
 void SCRadioVFO::calculateRXFrequency()
 {
 	_currentRXFrequency.replaceValue(_currentTXFrequency);
@@ -183,9 +152,13 @@ void SCRadioVFO::calculateTuningIncrement()
 {
 	uint32_t currentMillis = millis();
 	int16_t calculatedIncrement;
+
+	// Since these are static method variables, they will retain their value
+	// between calls to this method.  They are only set to zero on the first call
 	static int16_t lastCalculatedIncrement = 0;
 	static uint32_t mSecsAtLastKnobTurn	= 0;
 
+	// timediff is the number of milliseconds since the last knob turn event
 	uint16_t timeDiff = currentMillis - mSecsAtLastKnobTurn;
   
 	if (timeDiff > _mediumTuningThresholdms) 
@@ -201,7 +174,14 @@ void SCRadioVFO::calculateTuningIncrement()
 			calculatedIncrement = _fastTuningIncrement;
 		}
 	
-	if (calculatedIncrement == lastCalculatedIncrement) 
+	// I had a problem with the tuning increment where I believe on board events
+	// were causing the millis() to return abnormally low millisecond values 
+	// (millis clock does not increment during interrupts)
+	// So, to move to a larger tuning increment, 
+	// I require two larger calculated tuning increments in a row.
+	// to move to a smaller tuning increment, I don't
+	if ((calculatedIncrement < _currentTuningIncrement)
+	   || (calculatedIncrement == lastCalculatedIncrement))
 	{
 		_currentTuningIncrement = calculatedIncrement;
 	}
@@ -210,42 +190,67 @@ void SCRadioVFO::calculateTuningIncrement()
 	
 	mSecsAtLastKnobTurn = currentMillis;
 }
+
 void SCRadioVFO::changeFrequency(int8_t turnDirection)
 {
-	_lastTXFrequency.replaceValue(_currentTXFrequency);
+	SCRadioFrequency lastTXFrequency(_currentTXFrequency);
 
-	_newTXFrequency.replaceValue(_currentTXFrequency);
+	SCRadioFrequency newTXFrequency(_currentTXFrequency);
 
-	if (turnDirection == 1)
+	if ((KnobTurnDirection)turnDirection == KnobTurnDirection::CLOCKWISE)
 	{
-		_newTXFrequency.addHertz(_currentTuningIncrement);
+		newTXFrequency.addHertz(_currentTuningIncrement);
 	}
 	else
 	{
-		_newTXFrequency.addHertz(_currentTuningIncrement * -1);
+		newTXFrequency.addHertz(_currentTuningIncrement * -1);
 	}
 
-	if (_newTXFrequency.equals(_lastTXFrequency))
+	if (newTXFrequency.equals(lastTXFrequency))
 	{
 		return;
 	}
 
-	checkFrequencyBounds();
+	checkBoundsAndCorrectIfNeeded(newTXFrequency);
 
-	_currentTXFrequency.replaceValue(_newTXFrequency);
+	// all is good, use new value
+	_currentTXFrequency.replaceValue(newTXFrequency);
 
 	calculateRXFrequency();
 
 	_dds.sendFrequencyToDDS(_currentRXFrequency.asInt32());
 
+	// store off new value in eventData so display can pick it up when it gets frequency changed message
 	_eventData.setEventRelatedFrequency(&_currentTXFrequency, EventFrequencyField::OPERATING_FREQUENCY);
 
 	_eventManager.queueEvent(static_cast<int>(EventType::FREQUENCY_CHANGED), static_cast<int>(EventFrequencyField::OPERATING_FREQUENCY));
 }
 
+void SCRadioVFO::changeRITStatus(int8_t whichMenuItem)
+{
+	ISCRadioReadOnlyMenuItem* menuItem = _eventData.getReadOnlyMenuItem(whichMenuItem);
+
+	long menuItemValue = menuItem->getMenuItemValue();
+
+	_ritStatus = (RitStatus)menuItemValue;
+
+	_eventData.setEventRelatedBool((_ritStatus == RitStatus::ENABLED), EventBoolField::RIT_IS_ENABLED);
+
+	calculateRXFrequency();
+
+	_dds.sendFrequencyToDDS(_currentRXFrequency.asInt32());
+}
+
 void SCRadioVFO::changeRITOffset(int8_t turnDirection)
 {
 	int32_t newRITOffsetHz;
+
+	// if we are transmitting, don't respond to RIT change requests
+	if (_rxTXStatus == RxTxStatus::TX)
+	{
+		return;
+	}
+
 	long currentRITOffsetHz = _eventData.getEventRelatedLong(EventLongField::RIT_OFFSET);
 
 	newRITOffsetHz = currentRITOffsetHz;
@@ -259,37 +264,65 @@ void SCRadioVFO::changeRITOffset(int8_t turnDirection)
 		newRITOffsetHz -= RIT_ADJUST_INCREMENT;
 	}
 
-	newRITOffsetHz = checkRITBoundaries(newRITOffsetHz);
+	newRITOffsetHz = checkRITBoundariesAndCorrectIfNeeded(newRITOffsetHz);
 
+	// value is good, use it
 	currentRITOffsetHz = newRITOffsetHz;
 
+	// store away in event data so Display can pick up the value to display
 	_eventData.setEventRelatedLong(currentRITOffsetHz, EventLongField::RIT_OFFSET);
 
+	// update the rx frequency to reflect the new RIT adjustment
 	calculateRXFrequency();
 
 	_dds.sendFrequencyToDDS(_currentRXFrequency.asInt32());
 
+	// inform world is RIT is changed (display picks this up)
 	_eventManager.queueEvent(static_cast<int>(EventType::RIT_CHANGED), currentRITOffsetHz);
 }
 
-void SCRadioVFO::checkFrequencyBounds() 
+void SCRadioVFO::changeRxOffsetDirection(int8_t whichMenuItem)
 {
-	FrequencyCompareResult compareResult = _newTXFrequency.compare(_lowerFrequencyLimit);
+	ISCRadioReadOnlyMenuItem* menuItem = _eventData.getReadOnlyMenuItem(whichMenuItem);
+	long menuItemValue = menuItem->getMenuItemValue();
+
+	RxOffsetDirection rxOffsetDirection = (RxOffsetDirection)menuItemValue;
+
+	if (((RxOffsetDirection::BELOW == rxOffsetDirection)
+		&& (_rxOffset > 0))
+		|| ((RxOffsetDirection::ABOVE == rxOffsetDirection)
+			&& (_rxOffset < 0)))
+	{
+		_rxOffset *= -1;
+	}
+
+	// store off offset direction in eventData so display can pick it up
+	_eventData.setEventRelatedBool((_rxOffset > 0), EventBoolField::RX_OFFSET_IS_POSITIVE);
+
+	// recalculate RX frequency to reflect the new offset
+	calculateRXFrequency();
+
+	_dds.sendFrequencyToDDS(_currentRXFrequency.asInt32());
+}
+
+void SCRadioVFO::checkBoundsAndCorrectIfNeeded(SCRadioFrequency &newTXFrequency)
+{
+	FrequencyCompareResult compareResult = newTXFrequency.compare(_lowerFrequencyLimit);
 
 	if (compareResult == FrequencyCompareResult::LESS_THAN)
 	{
-		_newTXFrequency.replaceValue(_lowerFrequencyLimit);
+		newTXFrequency.replaceValue(_lowerFrequencyLimit);
 	}
 	
-	compareResult = _newTXFrequency.compare(_upperFrequencyLimit);
+	compareResult = newTXFrequency.compare(_upperFrequencyLimit);
 
 	if (compareResult == FrequencyCompareResult::GREATER_THAN)
 	{
-		_newTXFrequency.replaceValue(_upperFrequencyLimit);
+		newTXFrequency.replaceValue(_upperFrequencyLimit);
 	}
 }
 
-int16_t SCRadioVFO::checkRITBoundaries(int16_t newRITOffsetHz) 
+int16_t SCRadioVFO::checkRITBoundariesAndCorrectIfNeeded(int16_t newRITOffsetHz)
 {
 	if (newRITOffsetHz > _ritUpperLimitHz) 
 	{
@@ -300,7 +333,28 @@ int16_t SCRadioVFO::checkRITBoundaries(int16_t newRITOffsetHz)
 	{
 		newRITOffsetHz = _ritLowerLimitHz;
 	}	
-	
+
 	return newRITOffsetHz;
 }
 
+void SCRadioVFO::initializeKeyOutPin()
+{
+	pinMode(_keyOutPin, OUTPUT);
+	digitalWrite(_keyOutPin, LOW);
+}
+
+void SCRadioVFO::sendToDDSTxRxFrequencyAndChangeTxRxStatus(int16_t keyStatus)
+{
+	switch ((KeyStatus)keyStatus)
+	{
+	case KeyStatus::PRESSED:
+		_rxTXStatus = RxTxStatus::TX;
+		_dds.sendFrequencyToDDS(_currentTXFrequency.asInt32());
+		digitalWrite(_keyOutPin, HIGH);
+		break;
+	default:
+		digitalWrite(_keyOutPin, LOW);
+		_rxTXStatus = RxTxStatus::RX;
+		_dds.sendFrequencyToDDS(_currentRXFrequency.asInt32());
+	}
+}
