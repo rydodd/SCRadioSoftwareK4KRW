@@ -56,10 +56,10 @@ me to persue an event driven approach to the application.
 
 ## License
 
-This library is free software; you can redistribute it and/or modify it under
+This software is free software; you can redistribute it and/or modify it under
 the terms of the MIT License.
 
-This library is distributed in the hope that it will be useful, but WITHOUT ANY
+This software is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the MIT license for more details.
 
