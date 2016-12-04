@@ -22,7 +22,7 @@
 #ifndef SCRadioFrequency_h
 #define SCRadioFrequency_h
 
-#include "SCRadioConstants.h";
+#include "SCRadioConstants.h"
 
 class SCRadioFrequency
 {

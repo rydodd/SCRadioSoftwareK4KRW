@@ -45,7 +45,7 @@ void SCRadioButton::begin()
 	pinMode(_pin, INPUT_PULLUP);
 
 	// starting state is HIGH (not pressed)
-	_state == HIGH;
+	_state = HIGH;
 }
 
 // Notes button presses.  Keeps track of how long and returns press type (short or long or none)
@@ -75,6 +75,7 @@ ButtonPressType SCRadioButton::checkButton()
 		if ((int32_t)(currentMillis - _buttonDownMillis) < _debounceThresholdms) 
 		{
 			// ignore this for debounce
+			return ButtonPressType::NONE;
 		}
 		else if ((int32_t)(currentMillis - _buttonDownMillis) < _longPressThresholdms)
 		{

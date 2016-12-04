@@ -109,7 +109,7 @@ public:
 	 * 
 	 * @param[in] trueValueText
 	 */
-	void setTrueValueText(char* trueValueText);
+	void setTrueValueText(const char* trueValueText);
 
 	/**
 	 * setFalseValueText
@@ -119,7 +119,7 @@ public:
 	 *   
 	 * @param[in] falseValueText
 	 */
-	void setFalseValueText(char* falseValueText);
+	void setFalseValueText(const char* falseValueText);
     
 private:
 };

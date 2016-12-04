@@ -54,17 +54,17 @@ void SCRadioMenuItem::setMenuItemIndex(int8_t menuItemIndex)
 	_menuItemIndex = menuItemIndex;
 }
 
-void SCRadioMenuItem::setMenuItemName(char *origin)
+void SCRadioMenuItem::setMenuItemName(const char *origin)
 {
 	copyDisplayTextValue(_menuItemName, origin);
 }
 
-void SCRadioMenuItem::setMenuItemValueFormat(char *origin) 
+void SCRadioMenuItem::setMenuItemValueFormat(const char *origin) 
 {
 	copyDisplayTextValue(_menuItemValueFormat, origin);
 }
 
-void SCRadioMenuItem::copyDisplayTextValue(char *destination, char *origin)
+void SCRadioMenuItem::copyDisplayTextValue(char *destination, const char *origin)
 {
 	int len = strlen(origin);
 	if (len > TEXT_FOR_DISPLAY_MAX_LENGTH)

@@ -49,7 +49,7 @@ private:
 	/**
 	 * Holds information needed when the application logic initiates and responds to messages
 	 */
-	SCRadioEventData &_eventData;  
+	SCRadioEventData &_eventData;
 
 	// the following char arrays are text needed for display operation
 	// adding one to length to allow for char array's terminating null
@@ -218,7 +218,7 @@ public:
 	 * @param[in] line1Text points to text to be copied into splash text line 1
 	 * @param[in] line2Text points to text to be copied into splash text line 2
 	 */
-	void setSplashText(char* line1Text, char*line2Text);
+	void setSplashText(const char* line1Text, const char*line2Text);
 
 	/**
 	 * setStuckKeyErrorText
@@ -228,7 +228,7 @@ public:
 	 * 
 	 * @param[in] stuckKeyText points to text to be copied into the error text string
 	 */
-	void setStuckKeyErrorText(char* stuckKeyText);
+	void setStuckKeyErrorText(const char* stuckKeyText);
     
 private:
 	// private methods
@@ -320,7 +320,7 @@ private:
 	 * @param[in] origin Where to copy from
 	 * @param[in] max length to copy
 	 */
-	void setTextField(char* destination, char* origin, int maxLength);
+	void setTextField(char* destination, const char* origin, int maxLength);
 };
 
 #endif

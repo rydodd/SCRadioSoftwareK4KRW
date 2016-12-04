@@ -64,13 +64,13 @@ long SCRadioMenuItemBool::getMenuItemValue()
 	return 0;
 }
 
-void SCRadioMenuItemBool::setFalseValueText(char* falseText)
+void SCRadioMenuItemBool::setFalseValueText(const char* falseText)
 {
 	strncpy(_falseValueText, falseText, 9);
 	_falseValueText[9] = 0;
 }
 
-void SCRadioMenuItemBool::setTrueValueText(char* trueText)
+void SCRadioMenuItemBool::setTrueValueText(const char* trueText)
 {
 	strncpy(_trueValueText, trueText, 9);
 	_trueValueText[9] = 0;

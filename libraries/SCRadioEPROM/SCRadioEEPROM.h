@@ -146,7 +146,7 @@ private:
 	 * @param[in] valueToSet Value to write to EEPROM
 	 * @param[in] indexOfValue index of location to write value
 	 */
-	int32_t writeEEPROMValue(uint32_t valueToSet, uint8_t indexOfValue);
+	void writeEEPROMValue(uint32_t valueToSet, uint8_t indexOfValue);
   	
 	/**
 	 * readEEPROMValue

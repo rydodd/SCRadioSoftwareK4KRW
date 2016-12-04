@@ -120,7 +120,7 @@ public:
 	 *   
 	 * @param[in] origin Pointer to where to copy name from
 	 */
-	void setMenuItemName(char* origin);
+	void setMenuItemName(const char* origin);
 	
 	/**
 	* setMenuItemValueFormat
@@ -130,7 +130,7 @@ public:
 	*
 	* @param[in] origin Pointer to where to copy format string from
 	*/
-	void setMenuItemValueFormat(char* origin);
+	void setMenuItemValueFormat(const char* origin);
 
 	// public virtual functions.  These are implemented in this class but can be overriden in derived classes
 
@@ -186,7 +186,7 @@ private:
 	 * @param[out] destination Where to copy text
 	 * @param[in]  where to copy text from
 	 */
-	void copyDisplayTextValue(char* destination, char* origin);
+	void copyDisplayTextValue(char* destination, const char* origin);
 };
 
 #endif

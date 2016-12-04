@@ -95,7 +95,7 @@ uint32_t SCRadioEEPROM::readEEPROMValue(uint8_t indexOfValue)
 	return (uint32_t)myUnion.val;
 }
 
-int32_t SCRadioEEPROM::writeEEPROMValue(uint32_t valueToSet, uint8_t indexOfValue)
+void SCRadioEEPROM::writeEEPROMValue(uint32_t valueToSet, uint8_t indexOfValue)
 {
 	myUnion.val = valueToSet;
 

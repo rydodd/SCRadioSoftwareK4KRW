@@ -108,12 +108,12 @@ private:
 	/**
 	 * Milliseconds boundary between slow and medium knob turn event intervals
 	 */
-	const int16_t _mediumTuningThresholdms;
+	const uint16_t _mediumTuningThresholdms;
 
 	/**
 	 * Milliseconds boundary between fast and meduim knob turn event intervals
 	 */
-	const int16_t _fastTuningThresholdms;
+	const uint16_t _fastTuningThresholdms;
 
 
 	/**
@@ -197,8 +197,8 @@ public:
     				int16_t slowTuningIncrement,
     				int16_t mediumTuningIncrement,
     				int16_t fastTuningIncrement,
-    				int16_t mediumTuningThresholdms,
-    				int16_t fastTuningThresholdms);
+    				uint16_t mediumTuningThresholdms,
+    				uint16_t fastTuningThresholdms);
 
 	/**
 	 * begin

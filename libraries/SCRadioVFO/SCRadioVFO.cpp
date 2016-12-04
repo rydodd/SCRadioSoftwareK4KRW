@@ -22,7 +22,11 @@
 #include "SCRadioEventData.h"
 #include "SCRadioFrequency.h"
 #include "SCRadioKey.h"
+
+//#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Wreorder"
 #include "SCRadioVFO.h"
+//#pragma GCC diagnostic pop
 
 // Constructor
 // The logic after the ':' is initializer logic.  It will assign the input parameter values to object instance variables.
@@ -38,22 +42,22 @@ SCRadioVFO::SCRadioVFO(EventManager &eventManager,
     				int16_t slowTuningIncrement,
     				int16_t mediumTuningIncrement,
     				int16_t fastTuningIncrement,
-    				int16_t mediumTuningThresholdms,
-    				int16_t fastTuningThresholdms) : 
+    				uint16_t mediumTuningThresholdms,
+    				uint16_t fastTuningThresholdms) : 
 						_eventManager(eventManager),
     					_eventData(eventData),
     					_dds(dds),
-    					_keyOutPin(keyOutPin),
     					_ddsTuningWord(ddsTuningWord),
-    					_rxOffset(rxOffset),
     					_lowerFrequencyLimit(lowerFrequencyLimit),
 						_upperFrequencyLimit(upperFrequencyLimit),
-    					_ritMaxOffsetHz(ritMaxOffsetHz),
     					_slowTuningIncrement(slowTuningIncrement),
     					_mediumTuningIncrement(mediumTuningIncrement),
     					_fastTuningIncrement(fastTuningIncrement),
     					_mediumTuningThresholdms(mediumTuningThresholdms),
-    					_fastTuningThresholdms(fastTuningThresholdms)
+    					_fastTuningThresholdms(fastTuningThresholdms),
+						_keyOutPin(keyOutPin),
+						_rxOffset(rxOffset),
+						_ritMaxOffsetHz(ritMaxOffsetHz)
 {
 	// Don't bother putting any logic here.  Arduino constructors are not.  This section will never run.
 	// Put your logic in 'begin() instead and call it after instantiating your object.

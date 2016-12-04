@@ -26,8 +26,8 @@
 // Constructor
 // The logic after the ':' is initializer logic.  It will assign the input parameter values to object instance variables.
 SCRadioKey::SCRadioKey(EventManager &eventManager,
-    				int8_t keyInputPin) : _eventManager(eventManager), 
-											_keyInputPin(keyInputPin)
+    				int8_t keyInputPin) : _keyInputPin(keyInputPin),
+											_eventManager(eventManager)
 {
 	// Don't bother putting any logic here.  Arduino constructors are not.  This section will never run.
 	// Put your logic in 'begin() instead and call it after instantiating your object.

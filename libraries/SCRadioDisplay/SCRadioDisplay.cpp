@@ -31,8 +31,10 @@ SCRadioDisplay::SCRadioDisplay( SCRadioEventData &eventData,
 								int8_t lcdAddress,
 								int8_t lcdColumns,
 								int8_t lcdRows,
-								int16_t splashDelay) : _eventData(eventData), 
-														lcd(lcdAddress, lcdColumns, lcdRows),
+								int16_t splashDelay) : lcd(lcdAddress, 
+															lcdColumns, 
+															lcdRows),
+														_eventData(eventData),
 														_splashDelay(splashDelay) 
 {
 	// Don't bother putting any logic here.  Arduino constructors are not.  This section will never run.
@@ -106,14 +108,14 @@ void SCRadioDisplay::ritChangedListener(int eventCode, int ritOffset)
 }
 
 // used to setup the splash text (first line)
-void SCRadioDisplay::setSplashText(char* line1Text, char* line2Text)
+void SCRadioDisplay::setSplashText(const char* line1Text, const char* line2Text)
 {
 	setTextField(_splashLine1, line1Text, TEXT_FOR_DISPLAY_MAX_LENGTH);
 	setTextField(_splashLine2, line2Text, TEXT_FOR_DISPLAY_MAX_LENGTH);
 }
 
 // used to setup the error text for a stuck cw key
-void SCRadioDisplay::setStuckKeyErrorText(char* stuckKeyText)
+void SCRadioDisplay::setStuckKeyErrorText(const char* stuckKeyText)
 {
 	setTextField(_stuckKeyText, stuckKeyText, TEXT_FOR_DISPLAY_MAX_LENGTH);
 }
@@ -169,7 +171,7 @@ void SCRadioDisplay::displayRIT()
 {
 	char ritOffsetToDisplay[TEXT_FOR_DISPLAY_MAX_LENGTH + 1];
 	long ritOffset = _eventData.getEventRelatedLong(EventLongField::RIT_OFFSET);
-	sprintf(ritOffsetToDisplay, "  RIT %5d Hz  ", ritOffset);
+	sprintf(ritOffsetToDisplay, "  RIT %5ld Hz  ", ritOffset);
 	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
 	lcd.print(ritOffsetToDisplay);
 }
@@ -246,7 +248,6 @@ void SCRadioDisplay::displayMenuItemName(int8_t whichMenuItem, bool isEditing)
 
 void SCRadioDisplay::displayErrorText(ErrorType errorType)
 {
-	char errorMessageToDisplay[TEXT_FOR_DISPLAY_MAX_LENGTH + 1];
 	clearDisplayLine(LCDDisplayLine::FIRST_LINE);
 	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
 	if (errorType == ErrorType::STUCK_KEY)
@@ -263,7 +264,7 @@ void SCRadioDisplay::clearDisplayLine(LCDDisplayLine whichRow)
 	lcd.print(BLANK_LCD_LINE);
 }
 
-void SCRadioDisplay::setTextField(char* destination, char* origin, int maxLength)
+void SCRadioDisplay::setTextField(char* destination, const char* origin, int maxLength)
 {
 	int textLen = strlen(origin);
 
