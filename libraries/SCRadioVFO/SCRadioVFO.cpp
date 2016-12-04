@@ -238,6 +238,7 @@ void SCRadioVFO::changeRITStatus(int8_t whichMenuItem)
 
 	_ritStatus = (RitStatus)menuItemValue;
 
+	// this value is used by the display when it gets notified that RIT status changed
 	_eventData.setEventRelatedBool((_ritStatus == RitStatus::ENABLED), EventBoolField::RIT_IS_ENABLED);
 
 	calculateRXFrequency();
@@ -257,6 +258,12 @@ void SCRadioVFO::changeRITOffset(int8_t turnDirection)
 
 	long currentRITOffsetHz = _eventData.getEventRelatedLong(EventLongField::RIT_OFFSET);
 
+	// if current rit setting is zero, we are changing it to a non-zero value.  So, turn rit on.
+	if (currentRITOffsetHz == 0)
+	{
+		initiateRITStatusChange(RitStatus::ENABLED);
+	}
+
 	newRITOffsetHz = currentRITOffsetHz;
 
 	if (turnDirection == 1)
@@ -273,6 +280,12 @@ void SCRadioVFO::changeRITOffset(int8_t turnDirection)
 	// value is good, use it
 	currentRITOffsetHz = newRITOffsetHz;
 
+	// if new rit offset is 0, turn off rit.
+	if (currentRITOffsetHz == 0)
+	{
+		initiateRITStatusChange(RitStatus::DISABLED);
+	}
+
 	// store away in event data so Display can pick up the value to display
 	_eventData.setEventRelatedLong(currentRITOffsetHz, EventLongField::RIT_OFFSET);
 
@@ -283,6 +296,17 @@ void SCRadioVFO::changeRITOffset(int8_t turnDirection)
 
 	// inform world is RIT is changed (display picks this up)
 	_eventManager.queueEvent(static_cast<int>(EventType::RIT_CHANGED), currentRITOffsetHz);
+}
+
+void SCRadioVFO::initiateRITStatusChange(RitStatus ritStatus)
+{
+	_ritStatus = ritStatus;
+
+	// this value is used by the display when it gets notified that RIT status changed
+	_eventData.setEventRelatedBool((_ritStatus == RitStatus::ENABLED), EventBoolField::RIT_IS_ENABLED);
+
+	// this tells the menu item to update so it shows the correct RIT status
+	_eventManager.queueEvent(static_cast<int>(EventType::RIT_STATUS_EXTERNALLY_CHANGED), static_cast<int>(ritStatus));
 }
 
 void SCRadioVFO::changeRxOffsetDirection(int8_t whichMenuItem)

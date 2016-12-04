@@ -102,6 +102,17 @@ public:
 	int32_t getMenuItemValue();
 	
 	/**
+	* menuItemExternallyChangedListener
+	*
+	* @detail
+	*   Adjusts menu item value if an external process changes requests a change
+	*
+	* @param[in] eventCode event type of message
+	* @param[in] menuItemValue new menu item value
+	*/
+	void virtual menuItemExternallyChangedListener(int eventCode, int menuItemValue);
+
+	/**
 	 * setTrueValueText
 	 * 
 	 * @detail

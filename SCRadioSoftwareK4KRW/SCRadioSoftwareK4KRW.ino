@@ -99,6 +99,7 @@ void vfoRitStatusChangedListener(int eventCode, int whichMenuItem);
 void displayBacklightStatusChangedListener(int eventCode, int whichMenuItem);
 void vfoRxOffsetDirectionChangedListener(int eventCode, int whichMenuItem);
 void displayErrorOccurredListener(int eventCode, int whichErrorType);
+void ritMenuItemExternallyChangedListener(int eventCode, int newValue);
 
 
 // This is the library that implements the event queue
@@ -236,11 +237,12 @@ void setup()
 	eventManager.addListener(static_cast<int>(EventType::MENU_KNOB_TURNED), &menuKnobTurnedListener);
 	eventManager.addListener(static_cast<int>(EventType::MENU_ITEM_KNOB_TURNED), &menuItemKnobTurnedListener);
 	eventManager.addListener(static_cast<int>(EventType::MENU_ITEM_SELECTED), &displayMenuItemSelectedListener);
-	eventManager.addListener(static_cast<int>(EventType::RIT_STATUS_CHANGED), &vfoRitStatusChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::RIT_MENU_ITEM_VALUE_CHANGED), &vfoRitStatusChangedListener);
 	eventManager.addListener(static_cast<int>(EventType::MENU_ITEM_VALUE_CHANGED), &displayMenuItemValueChangedListener);
-	eventManager.addListener(static_cast<int>(EventType::BACKLIGHT_STATUS_CHANGED), &displayBacklightStatusChangedListener);
-	eventManager.addListener(static_cast<int>(EventType::RX_OFFSET_DIRECTION_CHANGED), &vfoRxOffsetDirectionChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::BACKLIGHT_MENU_ITEM_VALUE_CHANGED), &displayBacklightStatusChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::RX_OFFSET_DIRECTION_MENU_ITEM_VALUE_CHANGED), &vfoRxOffsetDirectionChangedListener);
 	eventManager.addListener(static_cast<int>(EventType::ERROR_OCCURRED), &displayErrorOccurredListener);
+	eventManager.addListener(static_cast<int>(EventType::RIT_STATUS_EXTERNALLY_CHANGED), &ritMenuItemExternallyChangedListener);
 
 	// The last thing we do before starting up is displaying the splash.
 	lcdDisplay.displaySplash();
@@ -325,7 +327,7 @@ int32_t checkInitialFrequency(int32_t initialFrequency)
  */
 void setupRITOnOffMenuItem()
 {
-	ritOnOffMenuItem.setMenuItemEventType(EventType::RIT_STATUS_CHANGED);
+	ritOnOffMenuItem.setMenuItemEventType(EventType::RIT_MENU_ITEM_VALUE_CHANGED);
 	ritOnOffMenuItem.setMenuItemName("RIT");
 	ritOnOffMenuItem.setMenuItemValueFormat("%s");
 	ritOnOffMenuItem.setTrueValueText("On");
@@ -339,7 +341,7 @@ void setupRITOnOffMenuItem()
 * Initializes the backlight on off menu item
 */void setupBacklightOnOffMenuItem()
 {
-  backlightOnOffMenuItem.setMenuItemEventType(EventType::BACKLIGHT_STATUS_CHANGED);
+  backlightOnOffMenuItem.setMenuItemEventType(EventType::BACKLIGHT_MENU_ITEM_VALUE_CHANGED);
   backlightOnOffMenuItem.setMenuItemName("Bklight");
   backlightOnOffMenuItem.setMenuItemValueFormat("%s");
   backlightOnOffMenuItem.setTrueValueText("Yes");
@@ -354,7 +356,7 @@ void setupRITOnOffMenuItem()
 */
 void setupRxOffsetDirectionMenuItem()
 {
-	rxOffsetDirectionMenuItem.setMenuItemEventType(EventType::RX_OFFSET_DIRECTION_CHANGED);
+	rxOffsetDirectionMenuItem.setMenuItemEventType(EventType::RX_OFFSET_DIRECTION_MENU_ITEM_VALUE_CHANGED);
 	rxOffsetDirectionMenuItem.setMenuItemName("Ofst Dir");
 	rxOffsetDirectionMenuItem.setMenuItemValueFormat("%s");
 	rxOffsetDirectionMenuItem.setTrueValueText("Positive");
@@ -443,4 +445,9 @@ void vfoRxOffsetDirectionChangedListener(int eventCode, int whichMenuItem)
 void displayErrorOccurredListener(int eventCode, int whichErrorType)
 {
 	lcdDisplay.errorOccurredListener(eventCode, whichErrorType);
+}
+
+void ritMenuItemExternallyChangedListener(int eventCode, int newMenuItemValue)
+{
+	ritOnOffMenuItem.menuItemExternallyChangedListener(eventCode, newMenuItemValue);
 }

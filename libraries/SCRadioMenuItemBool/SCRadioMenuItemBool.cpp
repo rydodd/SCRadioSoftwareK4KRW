@@ -64,6 +64,27 @@ long SCRadioMenuItemBool::getMenuItemValue()
 	return 0;
 }
 
+void SCRadioMenuItemBool::menuItemExternallyChangedListener(int eventCode, int menuItemValue)
+{
+	switch(menuItemValue)
+	{
+		case 0:
+			{
+			_menuItemValue = false;
+			break;
+			}
+		case 1:
+			{
+			_menuItemValue = true;
+			break;
+			}
+		default:
+		{
+			// nothing to do - ignore invalid value
+		}
+	}
+}
+
 void SCRadioMenuItemBool::setFalseValueText(const char* falseText)
 {
 	strncpy(_falseValueText, falseText, 9);

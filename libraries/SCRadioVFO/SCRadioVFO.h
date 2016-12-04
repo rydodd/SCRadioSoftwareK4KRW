@@ -376,6 +376,17 @@ private:
 	void initializeKeyOutPin();
 
 	/**
+	 * initiateRITStatusChange
+	 * 
+	 * @detail
+	 *   Used to initiate a change of status in the RIT (on or off).
+	 *   The change is propagated to the display and the RIT menu item
+	 * 
+	 * @param[in] ritStatus The new rit status (enabled or disabled)
+	 */
+	void initiateRITStatusChange(RitStatus ritStatus);
+
+	/**
 	 * switchTXRXFrequencyAndStatus
 	 * 
 	 * @detail
