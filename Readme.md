@@ -1,4 +1,4 @@
-﻿# SCRadioSoftwareK4KRW
+# SCRadioSoftwareK4KRW
 
 This software is for a Software Controlled Radio of the type introduced in the 
 March 2016 **QST** magazine in an article titled:
@@ -69,3 +69,4 @@ A copy of the license is included in the **SCRadioSoftwareK4KRW** package.
 ## Copyright
 
 Copyright (c) 2016 Richard Young Dodd
+
