@@ -1,5 +1,9 @@
 /*
- * SCRadioMenuItem.h - Class for radio menu item
+ * SCRadioMenuItem.h - Base Class for radio menu item
+ * 
+ * This is an abstract class to be inherited by the actual menu item classes
+ * which will implement menu items of different types
+ * boolean, integer ...
  *
  * Copyright (c) 2016 - Richard Young Dodd
  *
@@ -22,6 +26,34 @@ class EventManager;
 #include "SCRadioConstants.h"
 #include "ISCRadioReadOnlyMenuItem.h"
 
+// Notice below that we are inheriting 
+// ISCRadioReadOnlyMenuItem.
+//
+// ISCRadioReadOnlyMenuItem is an interface class.  It has no
+// actual logic associated with it.  By inheriting it, we are
+// required to implement methods that the interface provides
+// definitions for.  This particular interface
+// only has methods for getting menu item values.  It has no
+// methods for changing them.  So By inheriting this interface
+// we allow the menu item to be accessed in an readonly 
+// fashion by parts of the application that should never change
+// the menu item's values.
+// 
+// Because of the 'is a' relationship that inheritance gives us
+// we can treat any menu item as if it 'is a'
+// ISCRadioReadOnlyMenuItem by accessing it through pointer
+// or reference that is of type ISCRadioReadOnlyMenuItem.
+//
+// So, even though the object we are referencing actually has
+// methods to change internal values, we reference it as if 
+// it does not and therefore those methods are not accessible.
+// 
+// Interfaces are a very powerful concept.  They allow you to
+// dictate terms for interaction with other objects without
+// requiring those objects' authors to inherit everything 
+// from your classes including logic and data they don't 
+// really need or want.
+//
 class SCRadioMenuItem : public ISCRadioReadOnlyMenuItem
 {
 private:

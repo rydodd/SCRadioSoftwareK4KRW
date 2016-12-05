@@ -1,6 +1,33 @@
 /**
  * ISCRadioReadOnlyMenuItem.h - Interface to allowing readonly access to a menu item
  *
+ * Notice there is no accompanying .cpp file.  There is no logic being
+ * implemented.  This is an abstract class being treated as an interface.
+ * 
+ * Being abstract means you can't actually directly create one of these.
+ * But an abstract class could still have logic associated with it.
+ * 
+ * Interfaces do not implement any logic.  They only contain method 
+ * definitions.  Classes that inherit this class have to implement those
+ * methods.  And then they can be treated as if they are one of these.
+ * 
+ * So, if you inherit ISCRadioReadOnlyMenuItem you can be accessed as if you 
+ * are a ISCRadioReadOnlyMenuItem and you will only have access to the 
+ * methods defined below.
+ * 
+ * Interfaces are a very powerful concept.  They allow you to
+ * dictate terms for interaction with other objects without
+ * requiring those objects' authors to inherit everything 
+ * from your classes including logic and data they don't 
+ * really need or want.
+ * 
+ * Notice that the methods below look like this:
+ * void virtual myFunction() = 0;
+ * 
+ * Virtual means it can be overridden in classes that inherit this class.
+ * But, the '= 0' at the end says there will be no implementation in this
+ * class itself.  It is a 'pure virtual' method.
+ * 
  * Copyright (c) 2016 - Richard Young Dodd
  *
  * Richard Young Dodd licenses this file to you under the MIT license.
