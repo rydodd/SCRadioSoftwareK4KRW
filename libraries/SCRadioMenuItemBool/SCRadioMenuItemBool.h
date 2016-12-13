@@ -9,7 +9,7 @@
  * see <https://opensource.org/licenses/MIT>.
  *
  * @author Richard Y. Dodd - K4KRW
- * @version 1.0  11/20/2016.
+ * @version 1.0.2  12/12/2016.
  */
 
 #ifndef SCRadioMenuItemBool_h
@@ -19,7 +19,7 @@
 class EventData;
 class EventManager;
 
-#include "SCradioConstants.h"
+#include "SCRadioConstants.h"
 #include "SCRadioMenuItem.h"
 
 class SCRadioMenuItemBool : public SCRadioMenuItem

@@ -9,7 +9,7 @@
  * see <https://opensource.org/licenses/MIT>.
  *
  * @author Richard Y. Dodd - K4KRW
- * @version 1.0  11/20/2016.
+ * @version 1.0.2  12/12/2016.
  */
 
  /**
@@ -74,6 +74,7 @@
 #include <SCRadioMenu.h>
 #include <SCRadioMenuItem.h>
 #include <SCRadioMenuItemBool.h>
+#include <SCRadioVoltageMonitor.h>
 
 // Forwards definitions for functions in main .ino file.  This allows the actual 
 // function definitions to fall below the main application logic (setup and loop) 
@@ -100,7 +101,7 @@ void displayBacklightStatusChangedListener(int eventCode, int whichMenuItem);
 void vfoRxOffsetDirectionChangedListener(int eventCode, int whichMenuItem);
 void displayErrorOccurredListener(int eventCode, int whichErrorType);
 void ritMenuItemExternallyChangedListener(int eventCode, int newValue);
-
+void displayVoltageReadListener(int eventCode, int voltageX10);
 
 // This is the library that implements the event queue
 EventManager eventManager = EventManager();
@@ -123,11 +124,13 @@ SCRadioMainKnob mainKnob = SCRadioMainKnob(eventManager,
 											MAIN_KNOB_PIN_2, 
 											mainKnobButton);
 
+LiquidCrystal_I2C lcd = LiquidCrystal_I2C(LCD_ADDRESS,
+											LCD_COLUMNS,
+											LCD_ROWS);
+
 // Controls getting information to the LCD display
-SCRadioDisplay lcdDisplay = SCRadioDisplay(eventData, 
-											LCD_ADDRESS, 
-											LCD_COLUMNS, 
-											LCD_ROWS,
+SCRadioDisplay lcdControl = SCRadioDisplay(eventData, 
+											lcd,
 											SPLASH_DELAY);
 
 // Controls writing to and reading from EEPROM's persistent memory
@@ -143,7 +146,14 @@ SCRadioDDS dds = SCRadioDDS(DDS_WORD_LOAD_CLOCK_PIN,
 
 // Handles input from the CW key
 SCRadioKey key = SCRadioKey(eventManager,
-                            KEY_IN_PIN);
+                           KEY_IN_PIN);
+
+// periodically checks the rig's voltage
+SCRadioVoltageMonitor voltageMonitor = SCRadioVoltageMonitor(eventManager,
+										RIG_VOLTAGE_READ_PIN,
+										RIG_VOLTAGE_CALC_MULTIPLIER,
+										EventType::RIG_VOLTAGE_CHANGED,
+										LOOP_COUNT_BETWEEN_RIG_VOLTAGE_READS);
 
 // This controls all having to do with frequency
 // Changing frequency.  Calculating TX and RX frequency, RIT ...
@@ -186,9 +196,10 @@ void setup()
 	Serial.begin(9600);
 
 	mainKnob.begin();
-	lcdDisplay.begin();
-	lcdDisplay.setSplashText(SPLASH_LINE_1, SPLASH_LINE_2);
-	lcdDisplay.setStuckKeyErrorText(STUCK_KEY_TEXT);
+	lcd.init();
+	lcdControl.begin();
+	lcdControl.setSplashText(SPLASH_LINE_1, SPLASH_LINE_2);
+	lcdControl.setStuckKeyErrorText(STUCK_KEY_TEXT);
 	key.begin();
 	dds.begin();
 	vfo.begin();
@@ -243,9 +254,10 @@ void setup()
 	eventManager.addListener(static_cast<int>(EventType::RX_OFFSET_DIRECTION_MENU_ITEM_VALUE_CHANGED), &vfoRxOffsetDirectionChangedListener);
 	eventManager.addListener(static_cast<int>(EventType::ERROR_OCCURRED), &displayErrorOccurredListener);
 	eventManager.addListener(static_cast<int>(EventType::RIT_STATUS_EXTERNALLY_CHANGED), &ritMenuItemExternallyChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::RIG_VOLTAGE_CHANGED), &displayVoltageReadListener);
 
 	// The last thing we do before starting up is displaying the splash.
-	lcdDisplay.displaySplash();
+	lcdControl.displaySplash();
 
 	// This message kicks off things for the VFO and ends up forcing the frequency to be displayed on the display
 	eventManager.queueEvent(static_cast<int>(EventType::VFO_KNOB_TURNED), static_cast<int>(KnobTurnDirection::CLOCKWISE), EventManager::kHighPriority);
@@ -272,6 +284,9 @@ void loop()
 
 	// Handles checking to see if items need to be persisted to the EEPROM memory.
 	eprom.loop();
+
+	// periodically checks rig voltage
+	voltageMonitor.loop();
 
 	// The eventManager goes through the events message queue and calls handlers who have registered for each event it finds
 	// in the queue.
@@ -363,7 +378,6 @@ void setupRxOffsetDirectionMenuItem()
 	rxOffsetDirectionMenuItem.setFalseValueText("Negative");
 }
 
-
 // Here I am creating global functions that in turn call methods on each class 
 // to handle the various messages they need to respond to.
 // First part of name identifies which object this refers to.
@@ -384,12 +398,12 @@ void ritKnobTurnedListener(int eventCode, int turnDirection)
 
 void displayFrequencyChangedListener(int eventCode, int eventLongIndex)
 {
-	lcdDisplay.frequencyChangedListener(eventCode, eventLongIndex);
+	lcdControl.frequencyChangedListener(eventCode, eventLongIndex);
 }
 
 void displayRitChangedListener(int eventCode, int eventLongIndex)
 {
-	lcdDisplay.ritChangedListener(eventCode, eventLongIndex);
+	lcdControl.ritChangedListener(eventCode, eventLongIndex);
 }
 
 void eepromFrequencyChangedListener(int eventCode, int eventLongIndex)
@@ -404,17 +418,17 @@ void vfoKeyLineChangedListener(int eventCode, int keyStatus)
 
 void displayMainKnobModeChangedListener(int eventCode, int newMode)
 {
-	lcdDisplay.mainKnobModeChangedListener(eventCode, newMode);
+	lcdControl.mainKnobModeChangedListener(eventCode, newMode);
 }
 
 void displayMenuItemSelectedListener(int eventCode, int menuItemNumber)
 {
-	lcdDisplay.menuItemSelectedListener(eventCode, menuItemNumber);
+	lcdControl.menuItemSelectedListener(eventCode, menuItemNumber);
 }
 
 void displayMenuItemValueChangedListener(int eventCode, int whichMenuItem)
 {
-	lcdDisplay.menuItemValueChangedListener(eventCode, whichMenuItem);
+	lcdControl.menuItemValueChangedListener(eventCode, whichMenuItem);
 }
 
 void menuKnobTurnedListener(int eventCode, int turnDirection)
@@ -434,7 +448,7 @@ void vfoRitStatusChangedListener(int eventCode, int whichMenuItem)
 
 void displayBacklightStatusChangedListener(int eventCode, int whichMenuItem)
 {
-	lcdDisplay.backlightStatusChangedListener(eventCode, whichMenuItem);
+	lcdControl.backlightStatusChangedListener(eventCode, whichMenuItem);
 }
 
 void vfoRxOffsetDirectionChangedListener(int eventCode, int whichMenuItem)
@@ -444,10 +458,15 @@ void vfoRxOffsetDirectionChangedListener(int eventCode, int whichMenuItem)
 
 void displayErrorOccurredListener(int eventCode, int whichErrorType)
 {
-	lcdDisplay.errorOccurredListener(eventCode, whichErrorType);
+	lcdControl.errorOccurredListener(eventCode, whichErrorType);
 }
 
 void ritMenuItemExternallyChangedListener(int eventCode, int newMenuItemValue)
 {
 	ritOnOffMenuItem.menuItemExternallyChangedListener(eventCode, newMenuItemValue);
+}
+
+void displayVoltageReadListener(int eventCode, int voltageX10)
+{
+	lcdControl.voltageReadListener(eventCode, voltageX10);
 }
