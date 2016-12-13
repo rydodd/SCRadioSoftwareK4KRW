@@ -9,7 +9,7 @@
  * see <https://opensource.org/licenses/MIT>.
  *
  * @author Richard Y. Dodd - K4KRW
- * @version 1.0  11/20/2016.
+ * @version 1.0.2  12/12/2016.
  */
 
 #ifndef SCRadioConstants_h
@@ -203,7 +203,7 @@
 /**
  * Text for splash screen (line 2)
  */
-#define SPLASH_LINE_2             "   Transceiver  "
+#define SPLASH_LINE_2             "Xcvr K4KRW 1.0.2"
 
 /**
  * Number of milliseconds to display the splash screen
@@ -254,6 +254,60 @@
  * If menu items are added, this number must be increased.
  */
 #define MAX_MENU_ITEMS 3
+
+/**
+ * Arduino Pin to use to read rig voltage
+ */
+#define RIG_VOLTAGE_READ_PIN A7
+
+/**
+ * VOLTAGE_CALC_MULTIPLIER
+ *
+ * Number multiplied by voltage read on analog pin 7 to get voltage being 
+ * supplied to 49er.
+ * 
+ * So, where does this number come from?
+ * 
+ * The Nano can read the voltage on an analog pin.  But, it does not read it
+ * directly and it can only read voltages from 0 to 5 Volts.
+ * 
+ * 0 Volts is 0 and 5 Volts is 1023.  So, if you are dealing with 0 to 5 Volts
+ * you can multiple the value you read from the pin by 0.049 to get the
+ * actual voltage.
+ * 
+ * In the rig, we are using 12 Volts.  This cannot be read directly by the
+ * Arduino.  So the VFO circuit has an adjustable voltage divider circuit
+ * that is used to bring the 12 Volts down to an acceptable range for
+ * sampling by the Arduino.
+ * 
+ * So, as long as the voltage divider keeps the actual voltage being read under
+ * 5V we can then compare the known voltage going into the rig with 
+ * what is read by the Arduino and come up with a multiplier to give us
+ * the actual voltage.
+ * 
+ * This number is a bit arbitrary as Hank mentions in his comments.  So, you can
+ * use this or something close to it and can then use R8 to fine tune the
+ * voltage displayed by the rig to match a known actual supply voltage.
+ * 
+ * In this app's logic, both the 5/1023 and the voltage divider reversal
+ * are represented in this constant.
+ * 
+ * So, my Arduino was returning 739 when reading the analog pin.
+ * 739 * 0.171070  becomes about 126.  This is 12.6 * 10.  
+ * I handle the voltage as an integer value multiplied by 10 up until the 
+ * time I display it because I can only handle an integer in my messaging 
+ * scheme.  I then devide this value by 10 before I display it so we get 
+ * 12.6V.
+ * 
+ * Again, the exact value displayed depends on how you adjust R8.  So, adjust
+ * R8 until the display is accurate and you are done.
+ */
+#define RIG_VOLTAGE_CALC_MULTIPLIER 0.171070
+
+/**
+ * Check voltage after this many loops
+ */
+#define LOOP_COUNT_BETWEEN_RIG_VOLTAGE_READS 30000
 
 // The following are enums (Enumerations)
 // Rather than just having constants to represent the state of things, I am using enums.
@@ -324,6 +378,7 @@ enum class EventType : int16_t
 	RX_OFFSET_DIRECTION_MENU_ITEM_VALUE_CHANGED,
 	ERROR_OCCURRED,
 	RIT_STATUS_EXTERNALLY_CHANGED,
+	RIG_VOLTAGE_CHANGED
 };
 
 /**

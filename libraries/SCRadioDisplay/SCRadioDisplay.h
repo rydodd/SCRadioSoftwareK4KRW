@@ -9,7 +9,7 @@
  * see <https://opensource.org/licenses/MIT>.
  *
  * @author Richard Y. Dodd - K4KRW
- * @version 1.0  11/20/2016.
+ * @version 1.0.2  12/12/2016.
  */
 
 // Get the LCD I2C Library here:
@@ -44,7 +44,7 @@ private:
 	/**
 	 * Instance of the lcd class which has the logic to interact with the LCD hardware
 	 */
-	LiquidCrystal_I2C lcd;
+	LiquidCrystal_I2C &_lcd;
 
 	/**
 	 * Holds information needed when the application logic initiates and responds to messages
@@ -94,16 +94,15 @@ public:
 	*   Creates a SCRadioDisplay object
 	*   Note: You must call the begin() method before using the created object
 	*
-	* @param[in,out] eventData Reference to data needed by logic dealing with events
+	* @param[in] eventData Reference to data needed by logic dealing with events
+	* @param[in] lcd Reference to lcd display driver
 	* @param[in] lcdAddress 
 	* @param[in] lcdColumns Number of columns on the LCD screen
 	* @param[in] lcdRows Number of rows on the LCD screen
 	* @param[in] splashDelay The number of milliseconds to display the splash screen
 	*/
 	SCRadioDisplay( SCRadioEventData &eventData,
-    				int8_t lcdAddress,
-    				int8_t lcdColumns,
-    				int8_t lcdRows,
+					LiquidCrystal_I2C &lcd,
     				int16_t splashDelay);
    	
 	/**
@@ -133,6 +132,10 @@ public:
 	*   Displays the splash text
 	*/
 	void displaySplash();
+
+
+	void displayVoltage(int16_t voltageX100);
+
 
 	/**
 	* errorOccurredListener
@@ -230,6 +233,17 @@ public:
 	 */
 	void setStuckKeyErrorText(const char* stuckKeyText);
     
+	/**
+	 * voltageReadListener
+	 * 
+	 * @detail
+	 *   Handles event triggered after the rig voltage is read
+	 * 
+	 * @param[in] eventCode Event Type Code
+	 * @param[in] voltageX100 The Rig's supply voltage multiplied by 100
+	 */
+	void voltageReadListener(int eventCode, int voltageX100);
+
 private:
 	// private methods
 

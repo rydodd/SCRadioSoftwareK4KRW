@@ -9,7 +9,7 @@
  * see <https://opensource.org/licenses/MIT>.
  *
  * @author Richard Y. Dodd - K4KRW
- * @version 1.0  11/20/2016.
+ * @version 1.0.2  12/12/2016.
  */
 
 #include "Arduino.h"
@@ -28,12 +28,8 @@
 // Constructor
 // The logic after the ':' is initializer logic.  It will assign the input parameter values to object instance variables.
 SCRadioDisplay::SCRadioDisplay( SCRadioEventData &eventData,
-								int8_t lcdAddress,
-								int8_t lcdColumns,
-								int8_t lcdRows,
-								int16_t splashDelay) : lcd(lcdAddress, 
-															lcdColumns, 
-															lcdRows),
+								LiquidCrystal_I2C &lcd,
+								int16_t splashDelay) : _lcd(lcd),
 														_eventData(eventData),
 														_splashDelay(splashDelay) 
 {
@@ -44,8 +40,7 @@ SCRadioDisplay::SCRadioDisplay( SCRadioEventData &eventData,
 // used to setup the display object to be ready to use
 void SCRadioDisplay::begin()
 {
-	lcd.init();
-	lcd.backlight();
+	_lcd.backlight();
 	_mainKnobMode = MainKnobMode::VFO;
 	_lastMenuItemNumber = 0;
 }
@@ -59,13 +54,23 @@ void SCRadioDisplay::displaySplash()
 {
 	clearDisplayLine(LCDDisplayLine::FIRST_LINE);
 	clearDisplayLine(LCDDisplayLine::SECOND_LINE);
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
-	lcd.print(_splashLine1);
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
-	lcd.print(_splashLine2);
+	_lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
+	_lcd.print(_splashLine1);
+	_lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
+	_lcd.print(_splashLine2);
 	delay(_splashDelay);
 	clearDisplayLine(LCDDisplayLine::FIRST_LINE);
 	clearDisplayLine(LCDDisplayLine::SECOND_LINE);
+}
+
+void SCRadioDisplay::displayVoltage(int16_t voltageX10)
+{
+	char voltageText[TEXT_FOR_DISPLAY_MAX_LENGTH + 1];
+	int16_t rightOfDecimal = voltageX10 % 10;
+	int16_t leftOfDecimal = voltageX10 / 10;
+	sprintf(voltageText, "           %2d.%dV", leftOfDecimal, rightOfDecimal);
+	_lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
+	_lcd.print(voltageText);
 }
 
 void SCRadioDisplay::errorOccurredListener(int eventCode, int errorCode)
@@ -120,6 +125,14 @@ void SCRadioDisplay::setStuckKeyErrorText(const char* stuckKeyText)
 	setTextField(_stuckKeyText, stuckKeyText, TEXT_FOR_DISPLAY_MAX_LENGTH);
 }
 
+void SCRadioDisplay::voltageReadListener(int eventCode, int voltageX10)
+{
+	if (_mainKnobMode == MainKnobMode::VFO)
+	{
+		displayVoltage(voltageX10);
+	}
+}
+
 // private object methods
 
 void SCRadioDisplay::changeBacklight(int8_t whichMenuItem)
@@ -130,11 +143,11 @@ void SCRadioDisplay::changeBacklight(int8_t whichMenuItem)
 
 	if (backlightStatus == BacklightStatus::ENABLED)
 	{
-		lcd.backlight();
+		_lcd.backlight();
 	}
 	else
 	{
-		lcd.noBacklight();
+		_lcd.noBacklight();
 	}
 }
 
@@ -172,8 +185,8 @@ void SCRadioDisplay::displayRIT()
 	char ritOffsetToDisplay[TEXT_FOR_DISPLAY_MAX_LENGTH + 1];
 	long ritOffset = _eventData.getEventRelatedLong(EventLongField::RIT_OFFSET);
 	sprintf(ritOffsetToDisplay, "  RIT %5ld Hz  ", ritOffset);
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
-	lcd.print(ritOffsetToDisplay);
+	_lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
+	_lcd.print(ritOffsetToDisplay);
 }
 
 void SCRadioDisplay::displayMenuItemValue(int8_t whichMenuItem)
@@ -184,8 +197,8 @@ void SCRadioDisplay::displayMenuItemValue(int8_t whichMenuItem)
 	ISCRadioReadOnlyMenuItem * menuItem = _eventData.getReadOnlyMenuItem(whichMenuItem);
 	menuItem->getMenuItemDisplayValueCopy(textToDisplay);
 	clearDisplayLine(LCDDisplayLine::SECOND_LINE);
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
-	lcd.print(textToDisplay);
+	_lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::SECOND_LINE));
+	_lcd.print(textToDisplay);
 }
 
 void SCRadioDisplay::displayFrequency()
@@ -217,8 +230,8 @@ void SCRadioDisplay::displayFrequency()
 	ritIndicator,
 	offsetDirectionIndicator);
 
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
-	lcd.print(frequencyToDisplay);
+	_lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
+	_lcd.print(frequencyToDisplay);
 }
 
 void SCRadioDisplay::displayMenuItemName(int8_t whichMenuItem, bool isEditing)
@@ -242,17 +255,17 @@ void SCRadioDisplay::displayMenuItemName(int8_t whichMenuItem, bool isEditing)
 	}
 	
 	clearDisplayLine(LCDDisplayLine::FIRST_LINE);
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
-	lcd.print(menuItemToDisplay);
+	_lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
+	_lcd.print(menuItemToDisplay);
 }
 
 void SCRadioDisplay::displayErrorText(ErrorType errorType)
 {
 	clearDisplayLine(LCDDisplayLine::FIRST_LINE);
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
+	_lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(LCDDisplayLine::FIRST_LINE));
 	if (errorType == ErrorType::STUCK_KEY)
 	{
-		lcd.print(_stuckKeyText);
+		_lcd.print(_stuckKeyText);
 	}
 
 	delay(1000);
@@ -260,8 +273,8 @@ void SCRadioDisplay::displayErrorText(ErrorType errorType)
 
 void SCRadioDisplay::clearDisplayLine(LCDDisplayLine whichRow)
 {
-	lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(whichRow));
-	lcd.print(BLANK_LCD_LINE);
+	_lcd.setCursor(LCD_FIRST_COLUMN_NUMBER, static_cast<uint8_t>(whichRow));
+	_lcd.print(BLANK_LCD_LINE);
 }
 
 void SCRadioDisplay::setTextField(char* destination, const char* origin, int maxLength)
