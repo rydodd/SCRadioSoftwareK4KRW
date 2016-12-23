@@ -204,7 +204,8 @@ SCRadioMenuItemNameValue rxOffsetDirectionMenuItem = SCRadioMenuItemNameValue(ev
 
 SCRadioMenuItemNameValue paddlesOrientationMenuItem = SCRadioMenuItemNameValue(eventManager, 0, 0, 1);
 
-// Optional menu items
+// Optional menu items.  IF you want to free up some data memory.  Removing these would 
+// have little cost in functionality
 SCRadioMenuItemNameValue ritOnOffMenuItem = SCRadioMenuItemNameValue(eventManager, 0, 0, 1);
 
 SCRadioMenuItemNameValue backlightOnOffMenuItem = SCRadioMenuItemNameValue(eventManager, 1, 0, 1);
