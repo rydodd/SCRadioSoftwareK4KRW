@@ -8,6 +8,10 @@
 * 
 * Further modified for the SCRadioSoftwareK4KRW project by Richard Y. Dodd, 
 * K4KRW
+* 
+* Added back missing logic for selecting iambic a or b mode and also
+* for reversing the paddles
+* 
 * 12/19/2016
 * 
 * Based on OpenQRP Blog Iambic Morse Code Keyer Sketch by Steven T. Elliott, 

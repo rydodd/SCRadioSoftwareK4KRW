@@ -21,7 +21,6 @@
 #include "SCRadioDDS.h"
 #include "SCRadioEventData.h"
 #include "SCRadioFrequency.h"
-#include "SCRadioKey.h"
 
 //#pragma GCC diagnostic push
 //#pragma GCC diagnostic ignored "-Wreorder"

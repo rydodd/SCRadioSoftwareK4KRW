@@ -217,7 +217,7 @@
 /**
  * Text for splash screen (line 2)
  */
-#define SPLASH_LINE_2             "Xcvr K4KRW 1.0.2"
+#define SPLASH_LINE_2             "Xcvr K4KRW 1.0.3"
 
 /**
  * Number of milliseconds to display the splash screen

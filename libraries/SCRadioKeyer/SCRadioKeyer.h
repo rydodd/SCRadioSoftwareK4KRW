@@ -77,7 +77,8 @@ private:
 
 	/**
 	 * Used to read event related data when an event message
-	 * is received (like keyer speed changed).
+	 * is received (like keyer speed, mode or paddles
+	 * orientation changed).
 	 */
 	SCRadioEventData &_eventData;
 

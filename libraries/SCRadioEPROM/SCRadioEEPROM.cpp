@@ -196,17 +196,6 @@ void SCRadioEEPROM::processPaddlesOrientationToPotentiallyArchive(int whichMenuI
 		_paddlesOrientationHasChanged = true;
 	}
 }
-//uint32_t SCRadioEEPROM::readEEPROMValue(uint8_t indexOfValue)
-//{
-//	int offset = indexOfValue * sizeof(uint32_t);
-//
-//	myUnion.array[0] = EEPROM.read(offset);
-//	myUnion.array[1] = EEPROM.read(offset + 1);
-//	myUnion.array[2] = EEPROM.read(offset + 2);
-//	myUnion.array[3] = EEPROM.read(offset + 3);
-//
-//	return (uint32_t)myUnion.val;
-//}
 
 void SCRadioEEPROM::writeEEPROMValue(uint32_t valueToSet, uint8_t indexOfValue)
 {

@@ -22,7 +22,6 @@ class SCRadioEventData;
 
 // includes
 #include "SCRadioConstants.h"
-#include "SCRadioKey.h"
 #include "SCRadioFrequency.h"
 
 class SCRadioVFO
