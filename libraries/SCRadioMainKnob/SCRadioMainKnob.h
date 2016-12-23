@@ -9,7 +9,7 @@ SCRadioMainKnob.h - Class for controlling the main rotary encoder knob for softw
 * see <https://opensource.org/licenses/MIT>.
 
 @author Richard Y. Dodd - K4KRW
-@version 1.0.2  12/12/2016.
+@version 1.0.3  12/22/2016.
 */
 
 #ifndef SCRadioMainKnob_h

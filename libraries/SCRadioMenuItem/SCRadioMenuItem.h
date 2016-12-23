@@ -13,7 +13,7 @@
  * see <https://opensource.org/licenses/MIT>.
  *
  * @author Richard Y. Dodd - K4KRW
- * @version 1.0.2  12/12/2016.
+ * @version 1.0.3  12/22/2016.
  */
 
 #ifndef SCRadioMenuItem_h
@@ -62,15 +62,20 @@ private:
 	/**
 	 * Character array holding menu item name
 	 */
-	char _menuItemName[TEXT_FOR_DISPLAY_MAX_LENGTH + 1];
+	const char* _menuItemName;
 
-protected:
+public:
+	/**
+	* Used to enqueue messages resulting from menu item value changes
+	*/
+	EventManager &_eventManager;
+
 	// protected member data
 
 	/**
 	 * Format string for formatting the menu item's value for display
 	 */
-	char _menuItemValueFormat[TEXT_FOR_DISPLAY_MAX_LENGTH + 1];
+	const char* _menuItemValueFormat;
 
 	/**
 	 * Indicates which menu item number this menu item is
@@ -87,12 +92,45 @@ protected:
 	EventType _menuItemEventType;
 
 	/**
-	 * Used to enqueue messages resulting from menu item value changes
+	 * Menu item value (integer representation)
 	 */
-	EventManager &_eventManager;
+	int32_t _menuItemValue;
+
+	/**
+	 * Menu item increment value
+	 */
+	int8_t _incrementValue = 1;
+
+	/**
+	 * Menu item minimum value
+	 */
+	int32_t _minimumValue;
+
+	/**
+	 * Menu item maximum value
+	 */
+	int32_t _maximumValue;
 
 public:      
 	// public methods
+
+	/**
+	* SCRadioMenuItem
+	*
+	* @detail
+	*   Creates a SCRadioMenuItem.  Call begin() after created and before using
+	*
+	* @param[in] eventManager Reference to eventManager object that enqueues event messages for us
+	* @param[in] initialValue Initial value for menu item
+	* @param[in] incrementValue Increment value for menu item
+	* @param[in] minimumValue minimum value
+	* @param[in] maximumValue maximum value
+	*/
+	SCRadioMenuItem(EventManager &eventManager,
+		int32_t initialValue,
+		int8_t incrementValue,
+		int32_t minimumValue,
+		int32_t maximumValue);
 
 	/**
 	 * SCRadioMenuItem
@@ -101,8 +139,24 @@ public:
 	 *   Creates a SCRadioMenuItem.  Call begin() after created and before using
 	 * 
 	 * @param[in] eventManager Reference to eventManager object that enqueues event messages for us
+	 * @param[in] initialValue Initial value for menu item
+	 * @param[in] minimumValue minimum value
+	 * @param[in] maximumValue maximum value
 	 */
-	SCRadioMenuItem(EventManager &eventManager);
+	SCRadioMenuItem(EventManager &eventManager,
+		             int32_t initialValue,
+		             	int32_t minimumValue,
+		             		int32_t maximumValue);
+
+	/**
+	* adjustMenuItemValue
+	*
+	* @detail
+	*   Adjusts this menu item's value based on the direction of the turn of the main knob
+	*
+	* @param[in] turnDirection Directionknob was turned
+	*/
+	void adjustMenuItemValue(KnobTurnDirection turnDirection);
 
 	/**
 	 * getMenuItemEventType
@@ -125,6 +179,14 @@ public:
 	int8_t getMenuItemIndex();
 
 	/**
+	* getMenuItemValue
+	*
+	* @detail
+	*   Gets the menu items current value (integer form)
+	*/
+	int32_t getMenuItemValue();
+
+	/**
 	 * menuItemExternallyChangedListener
 	 * 
 	 * @detail
@@ -133,7 +195,7 @@ public:
 	 * @param[in] eventCode event type of message
 	 * @param[in] menuItemValue new menu item value
 	 */
-	void virtual menuItemExternallyChangedListener(int eventCode, int menuItemValue) = 0;
+	void menuItemExternallyChangedListener(int eventCode, int menuItemValue);
 
 	/**
 	 * setMenuItemEventType
@@ -164,7 +226,15 @@ public:
 	 * @param[in] origin Pointer to where to copy name from
 	 */
 	void setMenuItemName(const char* origin);
-	
+
+	/**
+	 * setMenuItemValue
+	 * 
+	 * @detail
+	 *   Sets the menu items value
+	 */
+	void setMenuItemValue(int32_t newValue);
+
 	/**
 	* setMenuItemValueFormat
 	*
@@ -175,8 +245,6 @@ public:
 	*/
 	void setMenuItemValueFormat(const char* origin);
 
-	// public virtual functions.  These are implemented in this class but can be overriden in derived classes
-
 	/**
 	 * getMenuItemDisplayName
 	 * 
@@ -185,29 +253,33 @@ public:
 	 * 
 	 * @param[out] destinationForCopy Where to copy display name
 	 */
-	void virtual getMenuItemDisplayNameCopy(char* destinationForCopy);
-		
+	void getMenuItemDisplayNameCopy(char* destinationForCopy);
+
+	/**
+	* rangeCheckValue
+	*
+	* @detail
+	*   Returns the provided value or a corrected value if the provided value is
+	*   out of range for this menu item.
+	*
+	* @param[in] valueToCheck Value to test
+	*
+	* @returns original or corrected value;
+	*/
+	int32_t rangeCheckValue(int32_t valueToCheck);
+
+	// public virtual methods
+	/**
+	* begin
+	*
+	* @detail
+	*   Initializes this menu item to make it ready to use - replaces what would normally be constructor logic
+	*   This must be called before this object is used.
+	*/
+	void virtual begin();
+
 	// public pure virtual functions.  These are implemented only in derived classes
 
-	/**
-	 * adjustMenuItemValue
-	 * 
-	 * @detail
-	 *   Adjusts this menu item's value based on the direction of the turn of the main knob
-	 * 
-	 * @param[in] turnDirection Directionknob was turned
-	 */
-	void virtual adjustMenuItemValue(KnobTurnDirection turnDirection) = 0;
-
-	/**
-	 * begin
-	 * 
-	 * @detail
-	 *   Initializes this menu item to make it ready to use - replaces what would normally be constructor logic
-	 *   This must be called before this object is used.
-	 */
-	void virtual begin() = 0;
-	
 	/**
 	 * getMenuItemDisplayValueCopy
 	 * 
@@ -216,8 +288,8 @@ public:
 	 * 
 	 * @param[out] destinationForCopy Where to copy the value text
 	 */
-	void virtual getMenuItemDisplayValueCopy(char* destinationForCopy) = 0;
-   
+	void virtual getMenuItemDisplayValueCopy(char* destinationForCopy);
+
 private:
 
 	/** 

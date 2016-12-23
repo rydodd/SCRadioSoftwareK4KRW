@@ -13,7 +13,7 @@
  * enqueue's the messages
  * 
  * @author Richard Y. Dodd - K4KRW
- * @version 1.0.2  12/12/2016.
+ * @version 1.0.3  12/22/2016.
  */
 
 #include "Arduino.h"

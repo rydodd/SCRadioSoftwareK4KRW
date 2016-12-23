@@ -9,7 +9,7 @@
  * see <https://opensource.org/licenses/MIT>.
  *
  * @author Richard Y. Dodd - K4KRW
- * @version 1.0.2  12/12/2016.
+ * @version 1.0.3  12/22/2016.
  */
 
  /**
@@ -61,6 +61,7 @@
  */
 
 #include <Arduino.h>
+#include <LiquidCrystal_I2C.h>
 #include <EventManager.h>
 #include <SCRadioConstants.h>
 #include <SCRadioButton.h>
@@ -69,11 +70,11 @@
 #include <SCRadioEventData.h>
 #include <SCRadioVFO.h>
 #include <SCRadioDDS.h>
-#include <SCRadioKey.h>
+#include <SCRadioKeyer.h>
 #include <SCRadioEEPROM.h>
 #include <SCRadioMenu.h>
 #include <SCRadioMenuItem.h>
-#include <SCRadioMenuItemBool.h>
+#include <SCRadioMenuItemNameValue.h>
 #include <SCRadioVoltageMonitor.h>
 
 // Forwards definitions for functions in main .ino file.  This allows the actual 
@@ -81,10 +82,22 @@
 // but the app still compile
 
 void retrieveInitialFrequency();
+void setupInitialKeyerMode();
+void setupInitialKeyerSpeed();
+void setupInitialPaddlesOrientation();
+
 int32_t checkInitialFrequency(int32_t initialFrequency);
+
+// optional menu items forwards
 void setupRITOnOffMenuItem();
 void setupBacklightOnOffMenuItem();
+
+
 void setupRxOffsetDirectionMenuItem();
+void setupKeyerModeMenuItem();
+void setupKeyerSpeedMenuItem();
+void setupPaddlesOrientationMenuItem();
+
 void vfoKnobTurnedListener(int eventCode, int turnDirection);
 void ritKnobTurnedListener(int eventCode, int turnDirection);
 void displayFrequencyChangedListener(int eventCode, int eventLongIndex);
@@ -96,12 +109,20 @@ void displayMenuItemSelectedListener(int eventCode, int menuItemNumber);
 void displayMenuItemValueChangedListener(int eventCode, int whichMenuItem);
 void menuKnobTurnedListener(int eventCode, int turnDirection);
 void menuItemKnobTurnedListener(int eventCode, int turnDirection);
-void vfoRitStatusChangedListener(int eventCode, int whichMenuItem);
-void displayBacklightStatusChangedListener(int eventCode, int whichMenuItem);
 void vfoRxOffsetDirectionChangedListener(int eventCode, int whichMenuItem);
 void displayErrorOccurredListener(int eventCode, int whichErrorType);
-void ritMenuItemExternallyChangedListener(int eventCode, int newValue);
 void displayVoltageReadListener(int eventCode, int voltageX10);
+void keyerModeChangedListener(int eventCode, int whichMenuItem);
+void keyerSpeedChangedListener(int eventCode, int whichMenuItem);
+void keyerPaddlesOrientationChangedListener(int eventCode, int whichMenuItem);
+void eepromKeyerModeChangedListener(int eventCode, int whichMenuItem);
+void eepromKeyerSpeedChangedListener(int eventCode, int whichMenuItem);
+void eepromPaddlesOrientationChangedListener(int eventCode, int whichMenuItem);
+
+// Forwards for listeners for optional settings
+void vfoRitStatusChangedListener(int eventCode, int whichMenuItem);
+void displayBacklightStatusChangedListener(int eventCode, int whichMenuItem);
+void ritMenuItemExternallyChangedListener(int eventCode, int newValue);
 
 // This is the library that implements the event queue
 EventManager eventManager = EventManager();
@@ -134,7 +155,7 @@ SCRadioDisplay lcdControl = SCRadioDisplay(eventData,
 											SPLASH_DELAY);
 
 // Controls writing to and reading from EEPROM's persistent memory
-SCRadioEEPROM eprom = SCRadioEEPROM(eventData, 
+SCRadioEEPROM eeprom = SCRadioEEPROM(eventData, 
 									MIN_EPROM_WRITE_INTERVAL);
 
 // Interaction logic for sending commands to the DDS
@@ -145,8 +166,7 @@ SCRadioDDS dds = SCRadioDDS(DDS_WORD_LOAD_CLOCK_PIN,
                             DDS_TUNING_WORD);
 
 // Handles input from the CW key
-SCRadioKey key = SCRadioKey(eventManager,
-                           KEY_IN_PIN);
+SCRadioKeyer keyer = SCRadioKeyer(eventManager, eventData);
 
 // periodically checks the rig's voltage
 SCRadioVoltageMonitor voltageMonitor = SCRadioVoltageMonitor(eventManager,
@@ -176,11 +196,18 @@ SCRadioVFO vfo = SCRadioVFO(eventManager,
 SCRadioMenu menu = SCRadioMenu(eventManager, eventData);
 
 // The following are menu items used by the menu
-SCRadioMenuItemBool ritOnOffMenuItem = SCRadioMenuItemBool(eventManager, false);
+SCRadioMenuItem keyerSpeedMenuItem = SCRadioMenuItem(eventManager, 12, 1, 0, 30);
 
-SCRadioMenuItemBool backlightOnOffMenuItem = SCRadioMenuItemBool(eventManager, true);
+SCRadioMenuItemNameValue keyerModeMenuItem = SCRadioMenuItemNameValue(eventManager, 0, 0, 2);
 
-SCRadioMenuItemBool rxOffsetDirectionMenuItem = SCRadioMenuItemBool(eventManager, false);
+SCRadioMenuItemNameValue rxOffsetDirectionMenuItem = SCRadioMenuItemNameValue(eventManager, 0, 0, 1);
+
+SCRadioMenuItemNameValue paddlesOrientationMenuItem = SCRadioMenuItemNameValue(eventManager, 0, 0, 1);
+
+// Optional menu items
+SCRadioMenuItemNameValue ritOnOffMenuItem = SCRadioMenuItemNameValue(eventManager, 0, 0, 1);
+
+SCRadioMenuItemNameValue backlightOnOffMenuItem = SCRadioMenuItemNameValue(eventManager, 1, 0, 1);
 
 /**
  * setup
@@ -200,7 +227,7 @@ void setup()
 	lcdControl.begin();
 	lcdControl.setSplashText(SPLASH_LINE_1, SPLASH_LINE_2);
 	lcdControl.setStuckKeyErrorText(STUCK_KEY_TEXT);
-	key.begin();
+	keyer.begin();
 	dds.begin();
 	vfo.begin();
 
@@ -211,21 +238,37 @@ void setup()
 	// Then calling additional logic to do things like pass in
 	// string information used by the menu item.
 	// Then adding the menu item to the menu
+	rxOffsetDirectionMenuItem.begin();
+	setupRxOffsetDirectionMenuItem();
+	keyerModeMenuItem.begin();
+	setupKeyerModeMenuItem();
+	keyerSpeedMenuItem.begin();
+	setupKeyerSpeedMenuItem();
+	paddlesOrientationMenuItem.begin();
+	setupPaddlesOrientationMenuItem();
+
+	// Option menu items setup
 	ritOnOffMenuItem.begin();
 	setupRITOnOffMenuItem();
 	backlightOnOffMenuItem.begin();
 	setupBacklightOnOffMenuItem();
-	rxOffsetDirectionMenuItem.begin();
-	setupRxOffsetDirectionMenuItem();
 
 	// Whatever order you place these addMenuItem statements is the order they will display
 	// in the menu
-	menu.addMenuItem(ritOnOffMenuItem);
+	menu.addMenuItem(keyerSpeedMenuItem);
+	menu.addMenuItem(keyerModeMenuItem);
+	menu.addMenuItem(paddlesOrientationMenuItem);
 	menu.addMenuItem(rxOffsetDirectionMenuItem);
+
+	// add optional menu items
+	menu.addMenuItem(ritOnOffMenuItem);
 	menu.addMenuItem(backlightOnOffMenuItem);
 
-	eprom.begin();
+	eeprom.begin();
 	retrieveInitialFrequency();
+	setupInitialKeyerMode();
+	setupInitialKeyerSpeed();
+	setupInitialPaddlesOrientation();
 
 	// Here we are telling the eventManager all of the methods that will be listening for event messages
 	//
@@ -248,13 +291,21 @@ void setup()
 	eventManager.addListener(static_cast<int>(EventType::MENU_KNOB_TURNED), &menuKnobTurnedListener);
 	eventManager.addListener(static_cast<int>(EventType::MENU_ITEM_KNOB_TURNED), &menuItemKnobTurnedListener);
 	eventManager.addListener(static_cast<int>(EventType::MENU_ITEM_SELECTED), &displayMenuItemSelectedListener);
-	eventManager.addListener(static_cast<int>(EventType::RIT_MENU_ITEM_VALUE_CHANGED), &vfoRitStatusChangedListener);
 	eventManager.addListener(static_cast<int>(EventType::MENU_ITEM_VALUE_CHANGED), &displayMenuItemValueChangedListener);
-	eventManager.addListener(static_cast<int>(EventType::BACKLIGHT_MENU_ITEM_VALUE_CHANGED), &displayBacklightStatusChangedListener);
 	eventManager.addListener(static_cast<int>(EventType::RX_OFFSET_DIRECTION_MENU_ITEM_VALUE_CHANGED), &vfoRxOffsetDirectionChangedListener);
 	eventManager.addListener(static_cast<int>(EventType::ERROR_OCCURRED), &displayErrorOccurredListener);
-	eventManager.addListener(static_cast<int>(EventType::RIT_STATUS_EXTERNALLY_CHANGED), &ritMenuItemExternallyChangedListener);
 	eventManager.addListener(static_cast<int>(EventType::RIG_VOLTAGE_CHANGED), &displayVoltageReadListener);
+	eventManager.addListener(static_cast<int>(EventType::KEYER_MODE_CHANGED), &keyerModeChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::KEYER_SPEED_CHANGED), &keyerSpeedChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::PADDLES_ORIENTATION_CHANGED), &keyerPaddlesOrientationChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::KEYER_MODE_CHANGED), &eepromKeyerModeChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::KEYER_SPEED_CHANGED), &eepromKeyerSpeedChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::PADDLES_ORIENTATION_CHANGED), &eepromPaddlesOrientationChangedListener);
+
+	// add listeners for optional menu items
+	eventManager.addListener(static_cast<int>(EventType::RIT_MENU_ITEM_VALUE_CHANGED), &vfoRitStatusChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::BACKLIGHT_MENU_ITEM_VALUE_CHANGED), &displayBacklightStatusChangedListener);
+	eventManager.addListener(static_cast<int>(EventType::RIT_STATUS_EXTERNALLY_CHANGED), &ritMenuItemExternallyChangedListener);
 
 	// The last thing we do before starting up is displaying the splash.
 	lcdControl.displaySplash();
@@ -276,14 +327,14 @@ void setup()
  */
 void loop() 
 {
-	// Handles checking status of the CW key.
-	key.loop();
+	// Handles checking status of the CW keyer.
+	keyer.loop();
 
 	// Handles checking status of the main knob (knob and button)
 	mainKnob.loop();
 
 	// Handles checking to see if items need to be persisted to the EEPROM memory.
-	eprom.loop();
+	eeprom.loop();
 
 	// periodically checks rig voltage
 	voltageMonitor.loop();
@@ -312,11 +363,65 @@ void loop()
  */
 void retrieveInitialFrequency() 
 {
-	int32_t initialFrequency = eprom.readStoredOperatingFrequency();
+	uint32_t initialFrequency = eeprom.readStoredOperatingFrequency();
 
 	initialFrequency = checkInitialFrequency(initialFrequency);
   
 	vfo.setInitialFrequency(initialFrequency);
+}
+
+/**
+ * setupInitialKeyerMode
+ * 
+ * @detail
+ *   Gets last keyer mode used from EEPROM memory and sets up app
+ *   to use that same mode
+ */
+void setupInitialKeyerMode()
+{
+	int8_t initialKeyerMode = eeprom.readStoredKeyerMode();
+	
+	initialKeyerMode = keyerModeMenuItem.rangeCheckValue(initialKeyerMode);
+
+	keyer.setKeyerMode(KeyerMode(initialKeyerMode));
+
+	keyerModeMenuItem.setMenuItemValue(initialKeyerMode);
+}
+
+/**
+ * setupInitialKeyerSpeed
+ * 
+ * @detail
+ *   Gets last keyer speed used from EEPROM memory and sets up app
+ *   to use that keyer speed
+ */
+void setupInitialKeyerSpeed()
+{
+	int8_t initialKeyerWPM = eeprom.readStoredKeyerSpeed();
+
+	initialKeyerWPM = keyerSpeedMenuItem.rangeCheckValue(initialKeyerWPM);
+
+	keyer.setKeyerWPM(initialKeyerWPM);
+
+	keyerSpeedMenuItem.setMenuItemValue(initialKeyerWPM);
+}
+
+/**
+ * setupInitialPaddlesOrientation
+ * 
+ * @detail
+ *   Gets last paddles orientation configuration from EEPROM memory
+ *   and sets up app to use that orientation
+ */
+void setupInitialPaddlesOrientation()
+{
+	int8_t initialPaddlesOrientation = eeprom.readStoredPaddlesOrientation();
+
+	initialPaddlesOrientation = paddlesOrientationMenuItem.rangeCheckValue(initialPaddlesOrientation);
+
+	keyer.setPaddlesOrientation(PaddlesOrientation(initialPaddlesOrientation));
+
+	paddlesOrientationMenuItem.setMenuItemValue(initialPaddlesOrientation);
 }
 
 /**
@@ -335,35 +440,6 @@ int32_t checkInitialFrequency(int32_t initialFrequency)
 }
 
 /**
- * setupRITOnOffMenuItem
- * 
- * @detail
- * Initializes the RIT on off menu item
- */
-void setupRITOnOffMenuItem()
-{
-	ritOnOffMenuItem.setMenuItemEventType(EventType::RIT_MENU_ITEM_VALUE_CHANGED);
-	ritOnOffMenuItem.setMenuItemName("RIT");
-	ritOnOffMenuItem.setMenuItemValueFormat("%s");
-	ritOnOffMenuItem.setTrueValueText("On");
-	ritOnOffMenuItem.setFalseValueText("Off");
-}
-
-/**
-* setupBacklightOnOffMenuItem
-*
-* @detail
-* Initializes the backlight on off menu item
-*/void setupBacklightOnOffMenuItem()
-{
-  backlightOnOffMenuItem.setMenuItemEventType(EventType::BACKLIGHT_MENU_ITEM_VALUE_CHANGED);
-  backlightOnOffMenuItem.setMenuItemName("Bklight");
-  backlightOnOffMenuItem.setMenuItemValueFormat("%s");
-  backlightOnOffMenuItem.setTrueValueText("Yes");
-  backlightOnOffMenuItem.setFalseValueText("No");
-}
-
-/**
 * setupRxOffsetDirectionMenuItem
 *
 * @detail
@@ -374,9 +450,87 @@ void setupRxOffsetDirectionMenuItem()
 	rxOffsetDirectionMenuItem.setMenuItemEventType(EventType::RX_OFFSET_DIRECTION_MENU_ITEM_VALUE_CHANGED);
 	rxOffsetDirectionMenuItem.setMenuItemName("Ofst Dir");
 	rxOffsetDirectionMenuItem.setMenuItemValueFormat("%s");
-	rxOffsetDirectionMenuItem.setTrueValueText("Positive");
-	rxOffsetDirectionMenuItem.setFalseValueText("Negative");
+	rxOffsetDirectionMenuItem.setMenuItemDisplayValue(1, "Positive");
+	rxOffsetDirectionMenuItem.setMenuItemDisplayValue(0, "Negative");
 }
+
+/**
+ * setupKeyerModeMenuItem
+ * 
+ * @detail
+ *   Sets up keyer mode menu item
+ */
+void setupKeyerModeMenuItem()
+{
+	keyerModeMenuItem.setMenuItemEventType(EventType::KEYER_MODE_CHANGED);
+	keyerModeMenuItem.setMenuItemName("Kyr Mode");
+	keyerModeMenuItem.setMenuItemValueFormat("%s");
+	keyerModeMenuItem.setMenuItemDisplayValue(0, "Straight");
+	keyerModeMenuItem.setMenuItemDisplayValue(1, "Iambic B");
+	keyerModeMenuItem.setMenuItemDisplayValue(2, "Iambic A");
+}
+
+/**
+ * setupKeyerSpeedMenuItem
+ * 
+ * @detail
+ *   Sets up keyer speed menu item
+ */
+void setupKeyerSpeedMenuItem()
+{
+	keyerSpeedMenuItem.setMenuItemEventType(EventType::KEYER_SPEED_CHANGED);
+	keyerSpeedMenuItem.setMenuItemName("Kyr WPM");
+	keyerSpeedMenuItem.setMenuItemValueFormat("%ld WPM");
+}
+
+/**
+ * setupPaddlesOrientationMenuItem
+ * 
+ * @detail
+ *   Sets up paddles orientation menu item
+ */
+void setupPaddlesOrientationMenuItem()
+{
+	paddlesOrientationMenuItem.setMenuItemEventType(EventType::PADDLES_ORIENTATION_CHANGED);
+	paddlesOrientationMenuItem.setMenuItemName("Paddles");
+	paddlesOrientationMenuItem.setMenuItemValueFormat("%s");
+	paddlesOrientationMenuItem.setMenuItemDisplayValue(0, "Normal");
+	paddlesOrientationMenuItem.setMenuItemDisplayValue(1, "Reversed");
+}
+
+
+// setting up optional menu items
+
+/**
+* setupRITOnOffMenuItem
+*
+* @detail
+* Initializes the RIT on off menu item
+*/
+void setupRITOnOffMenuItem()
+{
+	ritOnOffMenuItem.setMenuItemEventType(EventType::RIT_MENU_ITEM_VALUE_CHANGED);
+	ritOnOffMenuItem.setMenuItemName("RIT");
+	ritOnOffMenuItem.setMenuItemValueFormat("%s");
+	ritOnOffMenuItem.setMenuItemDisplayValue(1, "On");
+	ritOnOffMenuItem.setMenuItemDisplayValue(0, "Off");
+}
+
+/**
+* setupBacklightOnOffMenuItem
+*
+* @detail
+* Initializes the backlight on off menu item
+*/
+void setupBacklightOnOffMenuItem()
+{
+	backlightOnOffMenuItem.setMenuItemEventType(EventType::BACKLIGHT_MENU_ITEM_VALUE_CHANGED);
+	backlightOnOffMenuItem.setMenuItemName("Bklight");
+	backlightOnOffMenuItem.setMenuItemValueFormat("%s");
+	backlightOnOffMenuItem.setMenuItemDisplayValue(1, "Yes");
+	backlightOnOffMenuItem.setMenuItemDisplayValue(0, "No");
+}
+
 
 // Here I am creating global functions that in turn call methods on each class 
 // to handle the various messages they need to respond to.
@@ -408,7 +562,7 @@ void displayRitChangedListener(int eventCode, int eventLongIndex)
 
 void eepromFrequencyChangedListener(int eventCode, int eventLongIndex)
 {
-	eprom.frequencyChangedListener(eventCode, eventLongIndex);
+	eeprom.frequencyChangedListener(eventCode, eventLongIndex);
 }
 
 void vfoKeyLineChangedListener(int eventCode, int keyStatus)
@@ -441,16 +595,6 @@ void menuItemKnobTurnedListener(int eventCode, int turnDirection)
 	menu.menuItemKnobTurnedListener(eventCode, turnDirection);
 }
 
-void vfoRitStatusChangedListener(int eventCode, int whichMenuItem)
-{
-	vfo.ritStatusChangedListener(eventCode, whichMenuItem);
-}
-
-void displayBacklightStatusChangedListener(int eventCode, int whichMenuItem)
-{
-	lcdControl.backlightStatusChangedListener(eventCode, whichMenuItem);
-}
-
 void vfoRxOffsetDirectionChangedListener(int eventCode, int whichMenuItem)
 {
 	vfo.rxOffsetDirectionChangedListener(eventCode, whichMenuItem);
@@ -461,12 +605,53 @@ void displayErrorOccurredListener(int eventCode, int whichErrorType)
 	lcdControl.errorOccurredListener(eventCode, whichErrorType);
 }
 
-void ritMenuItemExternallyChangedListener(int eventCode, int newMenuItemValue)
-{
-	ritOnOffMenuItem.menuItemExternallyChangedListener(eventCode, newMenuItemValue);
-}
-
 void displayVoltageReadListener(int eventCode, int voltageX10)
 {
 	lcdControl.voltageReadListener(eventCode, voltageX10);
+}
+
+void keyerModeChangedListener(int eventCode, int whichMenuItem)
+{
+	keyer.keyerModeChangedListener(eventCode, whichMenuItem);
+}
+
+void keyerSpeedChangedListener(int eventCode, int whichMenuItem)
+{
+	keyer.keyerSpeedChangedListener(eventCode, whichMenuItem);
+}
+
+void eepromKeyerModeChangedListener(int eventCode, int whichMenuItem)
+{
+	eeprom.keyerModeChangedListener(eventCode, whichMenuItem);
+}
+
+void eepromKeyerSpeedChangedListener(int eventCode, int whichMenuItem)
+{
+	eeprom.keyerSpeedChangedListener(eventCode, whichMenuItem);
+}
+
+void keyerPaddlesOrientationChangedListener(int eventCode, int whichMenuItem)
+{
+	keyer.keyerPaddlesOrientationChangedListener(eventCode, whichMenuItem);
+}
+
+void eepromPaddlesOrientationChangedListener(int eventCode, int whichMenuItem)
+{
+	eeprom.paddlesOrientationChangedListener(eventCode, whichMenuItem);
+}
+
+// optional menu item listeners
+void vfoRitStatusChangedListener(int eventCode, int whichMenuItem)
+{
+	vfo.ritStatusChangedListener(eventCode, whichMenuItem);
+}
+
+void displayBacklightStatusChangedListener(int eventCode, int whichMenuItem)
+{
+	lcdControl.backlightStatusChangedListener(eventCode, whichMenuItem);
+}
+
+void ritMenuItemExternallyChangedListener(int eventCode, int newMenuItemValue)
+{
+	ritOnOffMenuItem.menuItemExternallyChangedListener(eventCode, newMenuItemValue);
 }

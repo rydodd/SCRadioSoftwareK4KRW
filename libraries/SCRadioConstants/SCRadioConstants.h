@@ -9,7 +9,7 @@
  * see <https://opensource.org/licenses/MIT>.
  *
  * @author Richard Y. Dodd - K4KRW
- * @version 1.0.2  12/12/2016.
+ * @version 1.0.3  12/22/2016.
  */
 
 #ifndef SCRadioConstants_h
@@ -184,10 +184,24 @@
 #define DDS_RESET_PIN             11
 
 /**
- * Arduino pin listening for CW key presses.
+ * Arduino pin listening for cw jack 'tip' signal
+ * (This is usually the left 'dit' paddle or the cw key)
  * You have to have done the rxOffset modification for this to be relevant
+ * 
+ * IMPORTANT - You cannot reverse these pins if your paddle is not wired 
+ * to this standard.  The straight key mode will not work if you do.
+ * There are comments in the SCRadioKeyer.cpp file explaining what to change to
+ * reverse the 'dit' and 'dah' paddles.
  */
-#define KEY_IN_PIN                7
+#define CW_KEY_PADDLE_JACK_TIP_PIN 7
+
+/**
+ * Arduino pin listening for cw jack 'ring' signal
+ * (This is usually the right 'dah' paddle)
+ * This requires an additional key line to be added to the hardware
+ * and routed to the specified pin.
+ */
+#define CW_KEY_PADDLE_JACK_RING_PIN 6
 
 /**
  * Arduino pin directing the 49er to transmit.
@@ -253,7 +267,12 @@
  * Maximum number of menu items.
  * If menu items are added, this number must be increased.
  */
-#define MAX_MENU_ITEMS 3
+#define MAX_MENU_ITEMS 6
+
+/**
+ * Maximum number of choices each name value menu item can have.
+ */
+#define MAX_NAME_VALUE_CHOICES 3
 
 /**
  * Arduino Pin to use to read rig voltage
@@ -349,7 +368,10 @@ enum class BacklightStatus : int8_t
  * Position where an item is stored in the EEPROM memory
  */
 enum class EEPROMValueIndex : uint8_t {
-	OPERATING_FREQUENCY = 0
+	OPERATING_FREQUENCY = 0,
+	KEYER_MODE = 1,
+	KEYER_SPEED = 2,
+	PADDLES_ORIENTATION = 3
 };
 
 /** 
@@ -378,7 +400,10 @@ enum class EventType : int16_t
 	RX_OFFSET_DIRECTION_MENU_ITEM_VALUE_CHANGED,
 	ERROR_OCCURRED,
 	RIT_STATUS_EXTERNALLY_CHANGED,
-	RIG_VOLTAGE_CHANGED
+	RIG_VOLTAGE_CHANGED,
+	KEYER_MODE_CHANGED,
+	KEYER_SPEED_CHANGED,
+	PADDLES_ORIENTATION_CHANGED
 };
 
 /**
@@ -407,6 +432,16 @@ enum class FrequencyCompareResult : int8_t
 	LESS_THAN = -1,
 	EQUAL,
 	GREATER_THAN
+};
+
+/**
+ * KeyerMode enum
+ */
+enum class KeyerMode : int8_t
+{
+	STRAIGHT_KEY = 0,
+	IAMBICB = 1,
+	IAMBICA = 2
 };
 
 /**
@@ -462,6 +497,12 @@ enum class EventBoolField : int8_t
 enum class EventFrequencyField : int8_t 
 {
 	OPERATING_FREQUENCY = 0
+};
+
+enum class PaddlesOrientation : int8_t
+{
+	NORMAL = 0,
+	REVERSED
 };
 
 /**

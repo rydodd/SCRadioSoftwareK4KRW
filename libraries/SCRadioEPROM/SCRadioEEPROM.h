@@ -9,7 +9,7 @@
  * see <https://opensource.org/licenses/MIT>.
  *
  * @author Richard Y. Dodd - K4KRW
- * @version 1.0.2  12/12/2016.
+ * @version 1.0.3  12/22/2016.
  */
 
 #ifndef SCRadioEEPROM_h
@@ -46,9 +46,39 @@ private:
 	uint32_t _lastTXFrequencyWritten;
 	
 	/**
+	 * Used to help tell if keyer mode has changed since the last time it was written to EEPROM
+	 */
+	uint32_t _lastKeyerModeWritten;
+
+	/**
+	 * Used to help tell if keyer speed has changed since the last time it was written to the EEPROM
+	 */
+	uint32_t _lastKeyerSpeedWritten;
+
+	/**
+	 * Used to help tell if paddles orientation has changed since the last tiem it was written
+	 */
+	uint32_t _lastPaddlesOrientationWritten;
+
+	/**
 	 * Frequency to be written to the EEPROM
 	 */
 	uint32_t _frequencyToWrite;
+	
+	/**
+	 * New keyer mode to be written to the EEPROM
+	 */
+	uint32_t _keyerModeToWrite;
+
+	/**
+	 * New keyer speed to be written to the EEPROM
+	 */
+	uint32_t _keyerSpeedToWrite;
+	
+	/**
+	* New paddles orientation to be written to the EEPROM
+	*/
+	uint32_t _paddlesOrientationToWrite;
 	
 	/**
 	 * Minimum milliseconds between writes to EEPROM memory
@@ -65,6 +95,21 @@ private:
 	 */
 	bool _txFrequencyHasChanged;
    
+	/**
+	 * Flag tells us the keyer mode has changed since written to EEPROM
+	 */
+	bool _keyerModeHasChanged;
+
+	/**
+	* Flag tells us the keyer speed has changed since written to EEPROM
+	*/
+	bool _keyerSpeedHasChanged;
+
+	/**
+	 * Flag tells us the paddles orientation has changed since last written
+	 */
+	bool _paddlesOrientationHasChanged;
+
   public:     
 	// public methods
 
@@ -92,14 +137,37 @@ private:
 	void frequencyChangedListener(int eventCode, int eventFrequencyIndex);
 	
 	/**
-	 * readStoredOperatingFrequency
+	 * keyerModeChangedListener
 	 * 
 	 * @detail
-	 *   Retrieves the operating frequency saved in EEPROM memory
+	 *   Listens for changes in keyer mode
 	 * 
-	 * @returns 32 bit unsigned int representing frequency (7030000 would be 7.030.000)
+	 * @param[in] eventCode Identifieds type of event
+	 * @param[in] whichMenuItem Identifies which menu item set the keyer mode
 	 */
-	 uint32_t readStoredOperatingFrequency();
+	void keyerModeChangedListener(int eventCode, int whichMenuItem);
+
+	/**
+	* keyerModeChangedListener
+	*
+	* @detail
+	*   Listens for changes in keyer speed
+	*
+	* @param[in] eventCode Identifieds type of event
+	* @param[in] whichMenuItem Identifies which menu item set the keyer speed
+	*/	
+	void keyerSpeedChangedListener(int eventCode, int whichMenuItem);
+
+	/**
+	* paddlesOrientationChangedListener
+	*
+	* @detail
+	*   Listens for changes in paddles orientation setting
+	*
+	* @param[in] eventCode Identifieds type of event
+	* @param[in] whichMenuItem Identifies which menu item set the orientation
+	*/
+	void paddlesOrientationChangedListener(int eventCode, int whichMenuItem);
 	
 	/**
 	 * begin
@@ -118,6 +186,46 @@ private:
 	 */
 	void loop();
 
+	/**
+	 * readStoredOperatingFrequency
+	 * 
+	 * @detail
+	 *   Returns the stored operating frequency from the eprom
+	 * 
+	 * @returns operating frequency
+	 */
+	uint32_t readStoredOperatingFrequency();
+
+	/**
+	 * readStoredKeyerMode
+	 * 
+	 * @detail
+	 *   Returns the stored keyer mode from the eprom
+	 * 
+	 * @returns keyer mode
+	 */
+	int8_t readStoredKeyerMode();
+
+	/**
+	 * readStoredKeyerSpeed
+	 * 
+	 * @detail
+	 *   returns the stored keyer speed from the eprom
+	 * 
+	 * @returns keyer speed
+	 */
+	int8_t readStoredKeyerSpeed();
+
+	/**
+	* readStoredPaddlesOrientation
+	*
+	* @detail
+	*   returns the stored paddles orientation value from the eprom
+	*
+	* @returns paddles orientation
+	*/	
+	int8_t readStoredPaddlesOrientation();
+
   private:
 	// private methods
 
@@ -130,6 +238,50 @@ private:
 	void processFrequencyToPotentiallyArchive(EventFrequencyField eventFrequencyIndex);
 
 	/**
+	 * processKeyerModeToPotentiallyArchive
+	 * 
+	 * @detail
+	 *   Gets changed keyer mode to potentially archive
+	 *   
+	 * @param[in] whichMenuItem Menu item adjusting the keyer mode
+	 */
+	void processKeyerModeToPotentiallyArchive(int whichMenuItem);
+
+	/**
+	* processKeyerSpeedToPotentiallyArchive
+	*
+	* @detail
+	*   Gets changed keyer speed to potentially archive
+	*
+	* @param[in] whichMenuItem Menu item adjusting the keyer speed
+	*/
+	void processKeyerSpeedToPotentiallyArchive(int whichMenuItem);
+
+
+	/**
+	* processPaddlesOrientationToPotentiallyArchive
+	*
+	* @detail
+	*   Gets changed paddles orientation to potentially archive
+	*
+	* @param[in] whichMenuItem Menu item adjusting the paddles orientation
+	*/
+	void processPaddlesOrientationToPotentiallyArchive(int whichMenuItem);
+	
+	/**
+	* readStoredValue
+	*
+	* @detail
+	*   Reads an unsigned 32 bit integer from EEPROM
+	*
+	* @param[in] which value to read
+	* 
+	* @returns the stored value
+	*/
+	// read a 32 bit unsigned integer from EEPROM
+	uint32_t readStoredValue(EEPROMValueIndex whichValue);
+
+	/**
 	 * writeOperatingFrequency
 	 * 
 	 * @detail
@@ -137,6 +289,30 @@ private:
 	 */
 	void writeOperatingFrequency();
   	
+	/**
+	 * writeKeyerMode
+	 * 
+	 * @detail
+	 *   Writes current keyer mode to EEPROM
+	 */
+	void writeKeyerMode();
+
+	/**
+	 * writeKeyerSpeed
+	 * 
+	 * @detail
+	 *   Writes current keyer speed to EEPROM
+	 */
+	void writeKeyerSpeed();
+
+	/**
+	 * writePaddlesOrientation
+	 * 
+	 * @detail
+	 *   Writes current paddles orientation to EEPROM
+	 */
+	void writePaddlesOrientation();
+
 	/**
 	 * writeEEPROMValue
 	 * 
@@ -147,17 +323,6 @@ private:
 	 * @param[in] indexOfValue index of location to write value
 	 */
 	void writeEEPROMValue(uint32_t valueToSet, uint8_t indexOfValue);
-  	
-	/**
-	 * readEEPROMValue
-	 * 
-	 * @detail
-	 *   Reads an unsigned 32 bit integer from EEPROM
-	 *   
-	 * @param[in] indexOfValue index of value to read
-	 */
-	// read a 32 bit unsigned integer from EEPROM
-	uint32_t readEEPROMValue(uint8_t indexOfValue);
 };
 
 #endif
