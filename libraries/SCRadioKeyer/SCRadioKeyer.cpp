@@ -153,6 +153,8 @@ void SCRadioKeyer::loop()
 				if (_inStuckKeyErrorState)
 				{
 					_inStuckKeyErrorState = false;
+
+					// the following makes the display update and clear the error message
 					_eventManager.queueEvent(
 						static_cast<int>(EventType::FREQUENCY_CHANGED), 
 							static_cast<int>(EventFrequencyField::OPERATING_FREQUENCY));
@@ -189,7 +191,8 @@ void SCRadioKeyer::loop()
 										// state shared for dit or dah
 			_eventManager.queueEvent(
 				static_cast<int>(EventType::KEY_LINE_CHANGED), 
-					static_cast<int>(KeyStatus::PRESSED));  // tell rig to 
+					static_cast<int>(KeyStatus::PRESSED),
+						EventManager::kHighPriority);       // tell rig to 
 															// transmit
 
 			_keyerTimer += millis();                // set _keyerTimer to  
@@ -206,8 +209,9 @@ void SCRadioKeyer::loop()
 			if (millis() > _keyerTimer)  // are we at end of key down ?
 			{
 				_eventManager.queueEvent(
-					static_cast<int>(EventType::KEY_LINE_CHANGED), 
-						static_cast<int>(KeyStatus::RELEASED));// Stop transmit
+					static_cast<int>(EventType::KEY_LINE_CHANGED),
+					static_cast<int>(KeyStatus::RELEASED),
+					EventManager::kHighPriority);     // Stop transmit
 
 				_keyerTimer = millis() + _ditTime;     // inter-element time
 

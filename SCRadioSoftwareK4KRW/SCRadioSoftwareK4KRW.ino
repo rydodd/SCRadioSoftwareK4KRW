@@ -260,11 +260,11 @@ void setup()
 	menu.addMenuItem(keyerModeMenuItem);
 	menu.addMenuItem(paddlesOrientationMenuItem);
 	menu.addMenuItem(rxOffsetDirectionMenuItem);
-
-	// add optional menu items
 	menu.addMenuItem(ritOnOffMenuItem);
+
 	menu.addMenuItem(backlightOnOffMenuItem);
 
+	// add optional menu items
 	eeprom.begin();
 	retrieveInitialFrequency();
 	setupInitialKeyerMode();
@@ -495,7 +495,7 @@ void setupPaddlesOrientationMenuItem()
 	paddlesOrientationMenuItem.setMenuItemEventType(EventType::PADDLES_ORIENTATION_CHANGED);
 	paddlesOrientationMenuItem.setMenuItemName("Paddles");
 	paddlesOrientationMenuItem.setMenuItemValueFormat("%s");
-	paddlesOrientationMenuItem.setMenuItemDisplayValue(0, "Normal");
+	paddlesOrientationMenuItem.setMenuItemDisplayValue(0, "Standard");
 	paddlesOrientationMenuItem.setMenuItemDisplayValue(1, "Reversed");
 }
 
