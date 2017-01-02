@@ -33,13 +33,21 @@ This software adds the following functionality to the rig.
 * A backlight on/off option
 * A rit offset adjustment.
 * Multispeed tuning knob
+* A CW Keyer that supports 
+  * Straight Key
+  * Iambic Mode B
+  * Iambic Mode A
+  * Keyer Speed Adjustment
+  * Reversed paddles
+  * Settings are persisted in EEPROM for later reuse
 * Startup check for a shorted key
 
 The software makes the following assumptions:
 * The microprocessor is an Arduino Nano with an AtMega 328 processor.
 * The display is two lines of 16 charaters.  It may be that larger will work.
-* You do not need a built in CW keyer.  Some earlier software provides one.
 * Your rig has the Receive Offset hardware modifications
+* To use the built in keyer you need to add a second key line into the Arduino
+  I used pin 6 on the Arduino for this.
 
 ## Feedback
 
@@ -51,6 +59,9 @@ https://github.com/rydodd/SCRadioSoftwareK4KRW/issues
 
 * The original software was created by Jack Purdum - W8TEE and Dennis Kidder - W6DQ
 * The original logic for controlling the DDS was written by Richard Visokey - AD7C
+* The original CW keyer logic was written by Steven T. Elliott - K1EL
+  and later modified by Glen Popiel - KW5GP
+  I further modified it to restore some removed functionality
 * Thanks to Igor Mikolic-Torreira for his arduino-EventManager project which allowed
 me to persue an event driven approach to the application.
 
